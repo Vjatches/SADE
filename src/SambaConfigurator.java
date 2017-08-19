@@ -287,7 +287,7 @@ class Window extends JFrame
             String s = null;
             try
             {
-                Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "apt-get -y install samba smbclient winbind krb5-user"});
+                Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "DEBIAN_FRONTEND=noninteractive apt-get -y install samba smbclient winbind krb5-user"});
                 BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
                 BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
                 System.out.println("Here is the standard output of the command:\n");
@@ -636,13 +636,6 @@ class Window extends JFrame
                 setHosts();
                 setHostname();
                 updatePackages();
-
-                JOptionPane.showMessageDialog(null, "Please, input the following information in  shell" +
-                        "\nduring the krb5 package installation:" +
-                        "\n 1. " + domainname + ", must be there automatically" +
-                        "\n 2. " + computersName + "" +
-                        "\n 3. " + computersName);
-
                 installPackages();
                 sambaConfiguration();
                 kerberosConfiguration();
