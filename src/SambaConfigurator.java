@@ -27,6 +27,12 @@ class Window extends JFrame
     JLabel labelDomainname = new JLabel("Domain name");
     JLabel labelFullName = new JLabel("Full name");
 
+    JLabel labelBadIp = new JLabel("Bad ip");
+    JLabel labelBadNetmask = new JLabel("Bad netmask");
+    JLabel labelBadGateway = new JLabel("Bad gateway");
+    JLabel labelBadComputersName = new JLabel("Bad computer's name");
+    JLabel labelBadDomainname = new JLabel("Bad domain's name");
+
     JComboBox comboBoxEth = new JComboBox();
     JTextField jTextFieldIpAddress = new JTextField();
     JTextField jTextFieldNetmask = new JTextField();
@@ -575,13 +581,19 @@ class Window extends JFrame
             labelComputersName.setForeground(Color.black);
             labelDomainname.setForeground(Color.black);
 
+            labelBadIp.setForeground(Color.red);
+            labelBadNetmask.setForeground(Color.red);
+            labelBadGateway.setForeground(Color.red);
+            labelBadComputersName.setForeground(Color.red);
+            labelBadDomainname.setForeground(Color.red);
+
             boolean error = false;
             InetAddress ip;
 
             ipAddress = jTextFieldIpAddress.getText();
             if(!f.validIP(ipAddress))
             {
-                System.out.println("Bad IP address");
+                labelBadIp.setVisible(true);
                 labelIpAddress.setForeground(Color.red);
                 error = true;
             }
@@ -589,7 +601,7 @@ class Window extends JFrame
             netmask = jTextFieldNetmask.getText();
             if(!f.validIP(netmask))
             {
-                System.out.println("Bad netmask");
+                labelBadNetmask.setVisible(true);
                 labelNetmask.setForeground(Color.red);
                 error = true;
             }
@@ -597,7 +609,7 @@ class Window extends JFrame
             gateway = jTextFieldGateway.getText();
             if(!f.validIP(gateway))
             {
-                System.out.println("Bad gateway");
+                labelBadGateway.setVisible(true);
                 labelGateway.setForeground(Color.red);
                 error = true;
             }
@@ -606,7 +618,7 @@ class Window extends JFrame
             String[] testDomainName = domainname.split("\\.");
             if(testDomainName.length <2 )
             {
-                System.out.println("Bad domain name");
+                labelBadDomainname.setVisible(true);
                 labelDomainname.setForeground(Color.red);
                 error = true;
             }
@@ -614,7 +626,8 @@ class Window extends JFrame
             computersName = jtextFieldComputersName.getText();
             if(computersName.isEmpty())
             {
-                System.out.println("Computer's name can't be empty");
+                labelBadComputersName.setVisible(true);
+                labelBadComputersName.setText("Bad computer's name");
                 labelComputersName.setForeground(Color.red);
                 error = true;
             }
@@ -623,8 +636,9 @@ class Window extends JFrame
                 String[] testComputersName = computersName.split("\\.");
                 if(testComputersName.length > 1)
                 {
-                    System.out.println("Computer's name can't include dots");
+                    labelBadComputersName.setText("Can't include dots");
                     labelComputersName.setForeground(Color.red);
+                    labelBadComputersName.setVisible(true);
                     error = true;
                 }
             }
@@ -797,7 +811,7 @@ class Window extends JFrame
         }
 
         this.setResizable(false);
-        setSize(600,480);
+        setSize(800,480);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setLayout(null);
 
@@ -808,55 +822,73 @@ class Window extends JFrame
         labelEthernetAdapter.setBounds(10, 10, 130, 20);
         this.add(labelEthernetAdapter);
 
-        labelIpAddress.setBounds(10, 40, 130, 20);
+        labelIpAddress.setBounds(10, 50, 130, 20);
         this.add(labelIpAddress);
 
-        labelNetmask.setBounds(10, 70, 130, 20);
+        labelNetmask.setBounds(10, 90, 130, 20);
         this.add(labelNetmask);
 
-        labelGateway.setBounds(10, 100, 130, 20);
+        labelGateway.setBounds(10, 130, 130, 20);
         this.add(labelGateway);
 
-        labelComputersName.setBounds(10, 130, 130, 20);
+        labelComputersName.setBounds(10, 170, 130, 20);
         this.add(labelComputersName);
 
-        labelDomainname.setBounds(10, 160, 130, 20);
+        labelDomainname.setBounds(10, 210, 130, 20);
         this.add(labelDomainname);
 
-        labelFullName.setBounds(10, 190, 130, 20);
+        labelFullName.setBounds(10, 250, 130, 20);
         this.add(labelFullName);
 
         ArrayList<String> interfacesNames = new ArrayList<String>();
         for(int i = 0; i < interfaces.size(); i++) interfacesNames.add(interfaces.get(i).name);
         comboBoxEth = new JComboBox(interfacesNames.toArray());
-        comboBoxEth.setBounds(140,10, 120, 20);
+        comboBoxEth.setBounds(140,10, 160, 20);
         this.add(comboBoxEth);
 
-        jTextFieldIpAddress.setBounds(140, 40, 120, 20);
+        jTextFieldIpAddress.setBounds(140, 50, 160, 20);
         this.add(jTextFieldIpAddress);
+        labelBadIp.setBounds(140, 70, 160, 20);
+        this.add(labelBadIp);
 
-        jTextFieldNetmask.setBounds(140, 70, 120, 20);
+        jTextFieldNetmask.setBounds(140, 90, 160, 20);
         this.add(jTextFieldNetmask);
+        labelBadNetmask.setBounds(140, 110, 160, 20);
+        this.add(labelBadNetmask);
 
-        jTextFieldGateway.setBounds(140, 100,120,20);
+        jTextFieldGateway.setBounds(140, 130,160,20);
         this.add(jTextFieldGateway);
+        labelBadGateway.setBounds(140, 150, 160, 20);
+        this.add(labelBadGateway);
 
-        jtextFieldComputersName.setBounds(140, 130, 120, 20);
+        jtextFieldComputersName.setBounds(140, 170, 160, 20);
         jtextFieldComputersName.getDocument().addDocumentListener(buildFullName);
         this.add(jtextFieldComputersName);
+        labelBadComputersName.setBounds(140, 190, 160, 20);
+        this.add(labelBadComputersName);
 
-        jTextFieldDomainname.setBounds(140, 160, 120, 20);
+        jTextFieldDomainname.setBounds(140, 210, 160, 20);
         jTextFieldDomainname.getDocument().addDocumentListener(buildFullName);
         this.add(jTextFieldDomainname);
+        labelBadDomainname.setBounds(140, 230, 160, 20);
+        this.add(labelBadDomainname);
 
-        jTextFieldFullName.setBounds(140, 190, 120, 20);
+        labelBadIp.setVisible(false);
+        labelBadNetmask.setVisible(false);
+        labelBadGateway.setVisible(false);
+        labelBadComputersName.setVisible(false);
+        labelBadDomainname.setVisible(false);
+
+        jTextFieldFullName.setBounds(140, 250, 160, 20);
         jTextFieldFullName.setEditable(false);
         this.add(jTextFieldFullName);
 
-        buttonConfigureEthernet.setBounds(200, 250, 120, 20);
+        buttonConfigureEthernet.setBounds(100, 290, 120, 20);
         ActionListener configureEthernetAL = new ConfigureEthernet();
         buttonConfigureEthernet.addActionListener(configureEthernetAL);
         this.add(buttonConfigureEthernet);
+
+
 
         Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize();
         int x = (int) ((dimension.getWidth() - this.getWidth())/2);
