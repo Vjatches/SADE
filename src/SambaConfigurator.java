@@ -1,11 +1,15 @@
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.text.DefaultCaret;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
 import java.net.InetAddress;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 
 class Window extends JFrame
@@ -18,6 +22,9 @@ class Window extends JFrame
     String computersName = "";
     String domainname = "";
     String fullName = "";
+
+    JLabel labelIconInstall = new JLabel();
+    JLabel labelStatus = new JLabel("Working...");
 
     JLabel labelEthernetAdapter = new JLabel("Ethernet adapter");
     JLabel labelIpAddress = new JLabel("IP address");
@@ -41,7 +48,18 @@ class Window extends JFrame
     JTextField jTextFieldDomainname = new JTextField();
     JTextField jTextFieldFullName = new JTextField();
 
+    JTextArea jTextAreaAppOutput = new JTextArea();
+    DefaultCaret caret = (DefaultCaret)jTextAreaAppOutput.getCaret();
+    JScrollPane scrollTerminal = new JScrollPane();
+    JTextField jTextFieldCommandLine = new JTextField();
+    JButton buttonRunCommand = new JButton("Execute");
+
     JButton buttonConfigureEthernet = new JButton("Configure");
+    JButton buttonUserManager = new JButton("User accounts");
+
+    File configFilePath = new File("/etc/SambaExpress/SamEx.conf");
+    ArrayList<String> configFile = new ArrayList<String>();
+
     //Класс с функциями
     Functions f = new Functions();
 
@@ -53,9 +71,10 @@ class Window extends JFrame
     {
         void configureInterface()
         {
-            System.out.println("Configuring interface...");
+            jTextAreaAppOutput.append("Configuring interface...\n");
             //Отключает кнопку
             buttonConfigureEthernet.setEnabled(false);
+            buttonRunCommand.setEnabled(false);
 
             //Ищет нужный интерфейс в списке
             String eth = comboBoxEth.getSelectedItem().toString();
@@ -144,12 +163,12 @@ class Window extends JFrame
                 ex.printStackTrace();
             }
 
-            System.out.println("Interface configured");
+            jTextAreaAppOutput.append("Interface configured\n");
         }
 
         void setHosts()
         {
-            System.out.println("Configuring /etc/hosts ...");
+            jTextAreaAppOutput.append("Configuring /etc/hosts ...\n");
             ArrayList<String> hosts = new ArrayList<>();
             try
             {
@@ -168,7 +187,6 @@ class Window extends JFrame
                 testLine = hosts.get(i).split("\t");
                 if(testLine.length == 2)
                 {
-                    System.out.println("found");
                     if((testLine[0].equals("127.0.1.1"))||(testLine[1].equals(computersName)))
                     {
                         hosts.remove(i);
@@ -185,7 +203,6 @@ class Window extends JFrame
                 testLine = hosts.get(i).split("\t");
                 if(testLine.length == 2)
                 {
-                    System.out.println("found");
                     if(testLine[0].equals(ipAddress))
                     {
                         hosts.remove(i);
@@ -202,7 +219,6 @@ class Window extends JFrame
                 testLine = hosts.get(i).split("\t");
                 if(testLine.length == 2)
                 {
-                    System.out.println("found");
                     if((testLine[0].equals("127.0.0.1"))||(testLine[1].equals("localhost")))
                     {
                         hosts.add(i+1, ipAddress + "\t" + fullName);
@@ -222,12 +238,12 @@ class Window extends JFrame
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            System.out.println("Configured /etc/hosts");
+            jTextAreaAppOutput.append("Configured /etc/hosts\n");
         }
 
         void setHostname()
         {
-            System.out.println("Setting hostname...");
+            jTextAreaAppOutput.append("Setting hostname...\n");
             ArrayList<String> hostname = new ArrayList<>();
             hostname.add(fullName);
             try {
@@ -235,32 +251,29 @@ class Window extends JFrame
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            System.out.println("Hostname set");
+            jTextAreaAppOutput.append("Hostname set\n");
         }
 
         void updatePackages()
         {
-            System.out.println("Updating packages...");
+            jTextAreaAppOutput.append("Updating packages...\n");
             String s = null;
             try
             {
                 Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "apt-get update"});
                 BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
                 BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-                System.out.println("Here is the standard output of the command:\n");
                 while ((s = stdInput.readLine()) != null)
                 {
-                    System.out.println(s);
+                    jTextAreaAppOutput.append(s + "\n");
                 }
-                System.out.println("Here is the standard error of the command:\n");
                 while ((s = stdError.readLine()) != null)
                 {
-                    System.out.println(s);
+                    jTextAreaAppOutput.append(s + "\n");
                 }
             }
             catch(IOException e)
             {
-                System.out.println("exception happened - heres what i know:");
                 e.printStackTrace();
             }
             try
@@ -268,56 +281,51 @@ class Window extends JFrame
                 Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "apt-get upgrade -y"});
                 BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
                 BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-                System.out.println("Here is the standard output of the command:\n");
                 while ((s = stdInput.readLine()) != null)
                 {
-                    System.out.println(s);
+                    jTextAreaAppOutput.append(s + "\n");
                 }
-                System.out.println("Here is the standard error of the command:\n");
                 while ((s = stdError.readLine()) != null)
                 {
-                    System.out.println(s);
+                    jTextAreaAppOutput.append(s + "\n");
                 }
             }
             catch(IOException e)
             {
-                System.out.println("exception happened - heres what i know:");
+
                 e.printStackTrace();
             }
-            System.out.println("Packages updated");
+            jTextAreaAppOutput.append("Packages updated\n");
         }
 
         void installPackages()
         {
-            System.out.println("Installing packages...");
+            jTextAreaAppOutput.append("Installing packages...\n");
             String s = null;
             try
             {
                 Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "DEBIAN_FRONTEND=noninteractive apt-get -y install samba smbclient winbind krb5-user"});
                 BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
                 BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-                System.out.println("Here is the standard output of the command:\n");
                 while ((s = stdInput.readLine()) != null)
                 {
-                    System.out.println(s);
+                    jTextAreaAppOutput.append(s + "\n");
                 }
-                System.out.println("Here is the standard error of the command:\n");
                 while ((s = stdError.readLine()) != null)
                 {
-                    System.out.println(s);
+                    jTextAreaAppOutput.append(s + "\n");
                 }
             }
             catch(IOException e)
             {
-                System.out.println("exception happened - heres what i know:");
                 e.printStackTrace();
             }
-            System.out.println("Packages Installed");
+            jTextAreaAppOutput.append("Packages Installed\n");
         }
 
         void sambaConfiguration()
         {
-            System.out.println("Configuring Samba...");
+            jTextAreaAppOutput.append("Configuring Samba...\n");
 
             String s = null;
             try
@@ -325,20 +333,17 @@ class Window extends JFrame
                 Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "rm /etc/samba/smb.conf"});
                 BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
                 BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-                System.out.println("Here is the standard output of the command:\n");
                 while ((s = stdInput.readLine()) != null)
                 {
-                    System.out.println(s);
+                    jTextAreaAppOutput.append(s + "\n");
                 }
-                System.out.println("Here is the standard error of the command:\n");
                 while ((s = stdError.readLine()) != null)
                 {
-                    System.out.println(s);
+                    jTextAreaAppOutput.append(s + "\n");
                 }
             }
             catch(IOException e)
             {
-                System.out.println("exception happened - heres what i know:");
                 e.printStackTrace();
             }
 
@@ -349,9 +354,9 @@ class Window extends JFrame
             String shortName = tmp[0].toUpperCase();
 
 
-            System.out.println("samba-tool domain provision --realm=" + domainname + " " +
+            jTextAreaAppOutput.append("samba-tool domain provision --realm=" + domainname + " " +
                     "--domain=" + shortName + " --adminpass=\"" + password + "\" --server-role=dc " +
-                    "--dns-backend=SAMBA_INTERNAL");
+                    "--dns-backend=SAMBA_INTERNAL\n");
 
             try
             {
@@ -360,49 +365,43 @@ class Window extends JFrame
                         "--dns-backend=SAMBA_INTERNAL"});
                 BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
                 BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-                System.out.println("Here is the standard output of the command:\n");
                 while ((s = stdInput.readLine()) != null)
                 {
-                    System.out.println(s);
+                    jTextAreaAppOutput.append(s + "\n");
                 }
-                System.out.println("Here is the standard error of the command:\n");
                 while ((s = stdError.readLine()) != null)
                 {
-                    System.out.println(s);
+                    jTextAreaAppOutput.append(s + "\n");
                 }
             }
             catch(IOException e)
             {
-                System.out.println("exception happened - heres what i know:");
                 e.printStackTrace();
             }
 
-            System.out.println("Samba configured");
+            jTextAreaAppOutput.append("Samba configured\n");
         }
 
         void kerberosConfiguration()
         {
-            System.out.println("Configuring Kerberos5...");
+            jTextAreaAppOutput.append("Configuring Kerberos5...\n");
             String s = null;
             try
             {
                 Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "cp /var/lib/samba/private/krb5.conf /etc/krb5.conf"});
                 BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
                 BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-                System.out.println("Here is the standard output of the command:\n");
                 while ((s = stdInput.readLine()) != null)
                 {
-                    System.out.println(s);
+                    jTextAreaAppOutput.append(s + "\n");
                 }
-                System.out.println("Here is the standard error of the command:\n");
                 while ((s = stdError.readLine()) != null)
                 {
-                    System.out.println(s);
+                    jTextAreaAppOutput.append(s + "\n");
                 }
             }
             catch(IOException e)
             {
-                System.out.println("exception happened - heres what i know:");
                 e.printStackTrace();
             }
 
@@ -423,20 +422,18 @@ class Window extends JFrame
                 e.printStackTrace();
             }
 
-            System.out.println("Kerberos5 configured");
+            jTextAreaAppOutput.append("Kerberos5 configured\n");
         }
 
         void resolvConfiguration()
         {
-            System.out.println("Configuring resolv.conf...");
+            jTextAreaAppOutput.append("Configuring resolv.conf...\n");
             ArrayList<String> resolvConf = new ArrayList<String>();
             try {
                 resolvConf = f.readFileToArrayList("/etc/resolv.conf");
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
-            for(int i = 0; i < resolvConf.size(); i++) System.out.println(resolvConf.get(i));
 
             boolean conf = false;
             for(int i = 0; i < resolvConf.size(); i++)
@@ -459,32 +456,29 @@ class Window extends JFrame
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            System.out.println("resolv.conf configured");
+            jTextAreaAppOutput.append("resolv.conf configured\n");
         }
 
         void generatingDirectory()
         {
-            System.out.println("Generating directory...");
+            jTextAreaAppOutput.append("Generating directory...\n");
             String s = null;
             try
             {
                 Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "mkdir -m 770 /Users"});
                 BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
                 BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-                System.out.println("Here is the standard output of the command:\n");
                 while ((s = stdInput.readLine()) != null)
                 {
-                    System.out.println(s);
+                    jTextAreaAppOutput.append(s + "\n");
                 }
-                System.out.println("Here is the standard error of the command:\n");
                 while ((s = stdError.readLine()) != null)
                 {
-                    System.out.println(s);
+                    jTextAreaAppOutput.append(s + "\n");
                 }
             }
             catch(IOException e)
             {
-                System.out.println("exception happened - heres what i know:");
                 e.printStackTrace();
             }
 
@@ -493,20 +487,17 @@ class Window extends JFrame
                 Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "chmod g+s /Users"});
                 BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
                 BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-                System.out.println("Here is the standard output of the command:\n");
                 while ((s = stdInput.readLine()) != null)
                 {
-                    System.out.println(s);
+                    jTextAreaAppOutput.append(s + "\n");
                 }
-                System.out.println("Here is the standard error of the command:\n");
                 while ((s = stdError.readLine()) != null)
                 {
-                    System.out.println(s);
+                    jTextAreaAppOutput.append(s + "\n");
                 }
             }
             catch(IOException e)
             {
-                System.out.println("exception happened - heres what i know:");
                 e.printStackTrace();
             }
 
@@ -515,28 +506,25 @@ class Window extends JFrame
                 Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "chown root:users /Users"});
                 BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
                 BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-                System.out.println("Here is the standard output of the command:\n");
                 while ((s = stdInput.readLine()) != null)
                 {
-                    System.out.println(s);
+                    jTextAreaAppOutput.append(s + "\n");
                 }
-                System.out.println("Here is the standard error of the command:\n");
                 while ((s = stdError.readLine()) != null)
                 {
-                    System.out.println(s);
+                    jTextAreaAppOutput.append(s + "\n");
                 }
             }
             catch(IOException e)
             {
-                System.out.println("exception happened - heres what i know:");
                 e.printStackTrace();
             }
-            System.out.println("Directory generated");
+            jTextAreaAppOutput.append("Directory generated\n");
         }
 
         void sambaPostConfig()
         {
-            System.out.println("Samba post-configuring...");
+            jTextAreaAppOutput.append("Samba post-configuring...\n");
             ArrayList<String> smbConf = new ArrayList<>();
             try {
                 smbConf = f.readFileToArrayList("/etc/samba/smb.conf");
@@ -570,117 +558,225 @@ class Window extends JFrame
                 e.printStackTrace();
             }
 
-            System.out.println("Samba post-configured");
+            jTextAreaAppOutput.append("Samba post-configured\n");
         }
+
+        Runnable configureThread = new Runnable() {
+            @Override
+            public void run()
+            {
+                labelIpAddress.setForeground(Color.black);
+                labelNetmask.setForeground(Color.black);
+                labelGateway.setForeground(Color.black);
+                labelComputersName.setForeground(Color.black);
+                labelDomainname.setForeground(Color.black);
+
+                labelBadIp.setForeground(Color.red);
+                labelBadNetmask.setForeground(Color.red);
+                labelBadGateway.setForeground(Color.red);
+                labelBadComputersName.setForeground(Color.red);
+                labelBadDomainname.setForeground(Color.red);
+
+                boolean error = false;
+                InetAddress ip;
+
+                ipAddress = jTextFieldIpAddress.getText();
+                if(!f.validIP(ipAddress))
+                {
+                    labelBadIp.setVisible(true);
+                    labelIpAddress.setForeground(Color.red);
+                    error = true;
+                }
+
+                netmask = jTextFieldNetmask.getText();
+                if(!f.validIP(netmask))
+                {
+                    labelBadNetmask.setVisible(true);
+                    labelNetmask.setForeground(Color.red);
+                    error = true;
+                }
+
+                gateway = jTextFieldGateway.getText();
+                if(!f.validIP(gateway))
+                {
+                    labelBadGateway.setVisible(true);
+                    labelGateway.setForeground(Color.red);
+                    error = true;
+                }
+
+                domainname = jTextFieldDomainname.getText();
+                String[] testDomainName = domainname.split("\\.");
+
+
+                if(testDomainName.length <2 )
+                {
+                    if(!domainname.equals(""))
+                    {
+                        if(testDomainName.length == 1)
+                        {
+                            domainname = testDomainName[0] + "." + testDomainName[0];
+                            jTextFieldDomainname.setText(domainname);
+                        }
+                    }
+                    else
+                    {
+                        labelBadDomainname.setVisible(true);
+                        labelDomainname.setForeground(Color.red);
+                        error = true;
+                    }
+                }
+
+
+                computersName = jtextFieldComputersName.getText();
+                if(computersName.isEmpty())
+                {
+                    labelBadComputersName.setVisible(true);
+                    labelBadComputersName.setText("Bad computer's name");
+                    labelComputersName.setForeground(Color.red);
+                    error = true;
+                }
+                else
+                {
+                    String[] testComputersName = computersName.split("\\.");
+                    if(testComputersName.length > 1)
+                    {
+                        labelBadComputersName.setText("Can't include dots");
+                        labelComputersName.setForeground(Color.red);
+                        labelBadComputersName.setVisible(true);
+                        error = true;
+                    }
+                }
+                fullName = computersName + "." + domainname;
+
+                if(!error)
+                {
+                    makeElementsInvisible();
+                    showInstallation();
+
+                    configureInterface();
+                    setHosts();
+                    setHostname();
+                    updatePackages();
+                    installPackages();
+                    sambaConfiguration();
+                    kerberosConfiguration();
+                    resolvConfiguration();
+                    generatingDirectory();
+                    sambaPostConfig();
+
+                    done();
+
+                    jTextAreaAppOutput.append("\nConfigured!");
+                    jTextAreaAppOutput.append("\nPlease, restart your computer");
+                    JOptionPane.showMessageDialog(null, "Installation completed" +
+                            "\nPlease restart your computer");
+                    buttonRunCommand.setEnabled(true);
+                }
+            }
+        };
 
         public void actionPerformed(ActionEvent e)
         {
-            labelIpAddress.setForeground(Color.black);
-            labelNetmask.setForeground(Color.black);
-            labelGateway.setForeground(Color.black);
-            labelComputersName.setForeground(Color.black);
-            labelDomainname.setForeground(Color.black);
-
-            labelBadIp.setForeground(Color.red);
-            labelBadNetmask.setForeground(Color.red);
-            labelBadGateway.setForeground(Color.red);
-            labelBadComputersName.setForeground(Color.red);
-            labelBadDomainname.setForeground(Color.red);
-
-            boolean error = false;
-            InetAddress ip;
-
-            ipAddress = jTextFieldIpAddress.getText();
-            if(!f.validIP(ipAddress))
-            {
-                labelBadIp.setVisible(true);
-                labelIpAddress.setForeground(Color.red);
-                error = true;
-            }
-
-            netmask = jTextFieldNetmask.getText();
-            if(!f.validIP(netmask))
-            {
-                labelBadNetmask.setVisible(true);
-                labelNetmask.setForeground(Color.red);
-                error = true;
-            }
-
-            gateway = jTextFieldGateway.getText();
-            if(!f.validIP(gateway))
-            {
-                labelBadGateway.setVisible(true);
-                labelGateway.setForeground(Color.red);
-                error = true;
-            }
-
-            domainname = jTextFieldDomainname.getText();
-            String[] testDomainName = domainname.split("\\.");
-            if(testDomainName.length <2 )
-            {
-                labelBadDomainname.setVisible(true);
-                labelDomainname.setForeground(Color.red);
-                error = true;
-            }
-
-            computersName = jtextFieldComputersName.getText();
-            if(computersName.isEmpty())
-            {
-                labelBadComputersName.setVisible(true);
-                labelBadComputersName.setText("Bad computer's name");
-                labelComputersName.setForeground(Color.red);
-                error = true;
-            }
-            else
-            {
-                String[] testComputersName = computersName.split("\\.");
-                if(testComputersName.length > 1)
-                {
-                    labelBadComputersName.setText("Can't include dots");
-                    labelComputersName.setForeground(Color.red);
-                    labelBadComputersName.setVisible(true);
-                    error = true;
-                }
-            }
-            fullName = computersName + "." + domainname;
-
-            if(!error)
-            {
-                configureInterface();
-                setHosts();
-                setHostname();
-                updatePackages();
-                installPackages();
-                sambaConfiguration();
-                kerberosConfiguration();
-                resolvConfiguration();
-                generatingDirectory();
-                sambaPostConfig();
-
-                System.out.println("Configured!");
-            }
-
+            new Thread(configureThread).start();
         }
     }
+
+    class RunCommand implements ActionListener
+    {
+        class RunCommandThread implements Runnable
+        {
+            public void run()
+            {
+                buttonConfigureEthernet.setEnabled(false);
+                buttonRunCommand.setEnabled(false);
+
+                String command = jTextFieldCommandLine.getText();
+
+                if(!command.equals(""))
+                {
+                    jTextAreaAppOutput.append("\n--Executing \"" + command + "\"--\n");
+                    String s = null;
+                    try
+                    {
+                        Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", command});
+                        BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                        BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+                        while ((s = stdInput.readLine()) != null)
+                        {
+                            jTextAreaAppOutput.append(s + "\n");
+                        }
+                        while ((s = stdError.readLine()) != null)
+                        {
+                            jTextAreaAppOutput.append(s + "\n");
+                        }
+                    }
+                    catch(IOException e)
+                    {
+                        e.printStackTrace();
+                    }
+                }
+
+                buttonConfigureEthernet.setEnabled(true);
+                buttonRunCommand.setEnabled(true);
+            }
+        }
+        public void actionPerformed(ActionEvent e)
+        {
+            new RunCommandThread().run();
+        }
+    }
+
+    class ButtonUsers implements ActionListener
+    {
+        public void actionPerformed(ActionEvent e)
+        {
+            new UserManager();
+        }
+    }
+
     DocumentListener buildFullName = new DocumentListener()
     {
 
         @Override
         public void insertUpdate(DocumentEvent documentEvent)
         {
-            jTextFieldFullName.setText(jtextFieldComputersName.getText() + "." + jTextFieldDomainname.getText());
+            String[] tmp = jTextFieldDomainname.getText().split("\\.");
+            if(tmp.length == 1)
+            {
+                jTextFieldFullName.setText(jtextFieldComputersName.getText() + "." + jTextFieldDomainname.getText() + "." + jTextFieldDomainname.getText());
+            }
+            else
+            {
+                jTextFieldFullName.setText(jtextFieldComputersName.getText() + "." + jTextFieldDomainname.getText());
+            }
         }
 
         @Override
         public void removeUpdate(DocumentEvent documentEvent)
         {
-            jTextFieldFullName.setText(jtextFieldComputersName.getText() + "." + jTextFieldDomainname.getText());
+            String[] tmp = jTextFieldDomainname.getText().split("\\.");
+            if(tmp.length == 1)
+            {
+                jTextFieldFullName.setText(jtextFieldComputersName.getText() + "." + jTextFieldDomainname.getText() + "." + jTextFieldDomainname.getText());
+            }
+            else
+            {
+                jTextFieldFullName.setText(jtextFieldComputersName.getText() + "." + jTextFieldDomainname.getText());
+            }
         }
 
         @Override
         public void changedUpdate(DocumentEvent documentEvent)
         {
-            jTextFieldFullName.setText(jtextFieldComputersName.getText() + "." + jTextFieldDomainname.getText());
+            String[] tmp = jTextFieldDomainname.getText().split("\\.");
+            if(tmp.length == 1)
+            {
+                jTextFieldFullName.setText(jtextFieldComputersName.getText() + "." + jTextFieldDomainname.getText() + "." + jTextFieldDomainname.getText());
+            }
+            else
+            {
+                jTextFieldFullName.setText(jtextFieldComputersName.getText() + "." + jTextFieldDomainname.getText());
+            }
         }
     };
 
@@ -799,6 +895,55 @@ class Window extends JFrame
         jTextFieldNetmask.setText("255.255.255.0");
     }
 
+    void makeElementsInvisible()
+    {
+        labelEthernetAdapter.setVisible(false);
+        labelIpAddress.setVisible(false);
+        labelNetmask.setVisible(false);
+        labelGateway.setVisible(false);
+        labelComputersName.setVisible(false);
+        labelDomainname.setVisible(false);
+        labelFullName.setVisible(false);
+
+        comboBoxEth.setVisible(false);
+        jTextFieldIpAddress.setVisible(false);
+        jTextFieldNetmask.setVisible(false);
+        jTextFieldGateway.setVisible(false);
+        jtextFieldComputersName.setVisible(false);
+        jTextFieldDomainname.setVisible(false);
+        jTextFieldFullName.setVisible(false);
+    }
+
+    void showInstallation()
+    {
+        labelIconInstall.setVisible(true);
+        labelStatus.setText("Working...");
+        labelStatus.setVisible(true);
+    }
+
+    void done()
+    {
+        labelIconInstall.setVisible(false);
+
+        String version = null;
+        try
+        {
+            Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "smbclient -V"});
+            BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            version = stdInput.readLine();
+            configFile.set(0, "SambaConfigured=yes");
+            configFile.set(1, "SambaVersion=" + version);
+            f.writeArrayListToFile(configFile, "/etc/SambaExpress/SamEx.conf");
+        }
+        catch(IOException e)
+        {
+            System.out.println("exception happened - heres what i know:");
+            e.printStackTrace();
+        }
+
+        labelStatus.setText("Installed");
+    }
+
     public Window()
     {
         super("Samba configurator");
@@ -807,17 +952,27 @@ class Window extends JFrame
         if(!root)
         {
             JOptionPane.showMessageDialog(null, "No root permissions. Run application via terminal with sudo or using superuser");
-            System.exit(1);
+            //System.exit(1);
         }
 
         this.setResizable(false);
-        setSize(800,480);
+        setSize(700,480);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setLayout(null);
 
         getInterfacesData();
         getComputersName();
         getIpAdresses();
+
+        labelStatus.setBounds(120, 180, 100, 20);
+        labelStatus.setVisible(false);
+        this.add(labelStatus);
+
+        ImageIcon gifInstall = new ImageIcon(Toolkit.getDefaultToolkit().createImage(Window.class.getResource("loading.gif")));
+        labelIconInstall.setIcon(gifInstall);
+        labelIconInstall.setBounds(35, 0, 230, 200);
+        labelIconInstall.setVisible(false);
+        this.add(labelIconInstall);
 
         labelEthernetAdapter.setBounds(10, 10, 130, 20);
         this.add(labelEthernetAdapter);
@@ -882,13 +1037,33 @@ class Window extends JFrame
         jTextFieldFullName.setBounds(140, 250, 160, 20);
         jTextFieldFullName.setEditable(false);
         this.add(jTextFieldFullName);
+        caret.setUpdatePolicy(DefaultCaret.OUT_BOTTOM);
+        jTextAreaAppOutput.setBackground(Color.black);
+        jTextAreaAppOutput.setForeground(Color.white);
+        jTextAreaAppOutput.setFont(jTextAreaAppOutput.getFont().deriveFont(10f));
+        scrollTerminal = new JScrollPane();
+        scrollTerminal.add(jTextAreaAppOutput);
+        scrollTerminal.setViewportView(jTextAreaAppOutput);
+        scrollTerminal.setBounds(320, 10, 360, 260);
+        this.add(scrollTerminal);
+        jTextAreaAppOutput.append("Ready\n");
 
-        buttonConfigureEthernet.setBounds(100, 290, 120, 20);
+        jTextFieldCommandLine.setBounds(320, 290, 260, 20);
+        this.add(jTextFieldCommandLine);
+        buttonRunCommand.setBounds(590, 290, 90, 20);
+        ActionListener runCommand = new RunCommand();
+        buttonRunCommand.addActionListener(runCommand);
+        this.add(buttonRunCommand);
+
+        buttonConfigureEthernet.setBounds(10, 290, 140, 20);
         ActionListener configureEthernetAL = new ConfigureEthernet();
         buttonConfigureEthernet.addActionListener(configureEthernetAL);
         this.add(buttonConfigureEthernet);
-
-
+        buttonUserManager.setBounds(160, 290, 140, 20);
+        ActionListener buttonUsers = new ButtonUsers();
+        buttonUserManager.addActionListener(buttonUsers);
+        //buttonUserManager.setEnabled(false);
+        this.add(buttonUserManager);
 
         Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize();
         int x = (int) ((dimension.getWidth() - this.getWidth())/2);
@@ -898,6 +1073,42 @@ class Window extends JFrame
 
         JOptionPane.showMessageDialog(null, "This application works only with root permissions" +
                 "\nBe sure that the program was started via terminal");
+
+        if(configFilePath.exists())
+        {
+            try {
+                configFile = f.readFileToArrayList("/etc/SambaExpress/SamEx.conf");
+                String[] sambaStatus = configFile.get(0).split("=");
+                if(sambaStatus[1].equals("no")) jTextAreaAppOutput.append("Samba is not configured\n");
+                else
+                {
+                    if(sambaStatus[1].equals("yes"))
+                    {
+                        String[] sambaVersion = configFile.get(1).split("=");
+                        jTextAreaAppOutput.append("Samba installed.\nVersion " + sambaVersion[1]);
+                        buttonUserManager.setEnabled(true);
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+
+            }
+        }
+        else
+        {
+            configFile.add("SambaConfigured=no");
+            configFile.add("SambaVersion=0");
+            jTextAreaAppOutput.append("First launch detected.\nSamba is not configured");
+            try {
+                configFilePath.getParentFile().mkdirs();
+                Path path = Paths.get("/etc/SambaExpress/SamEx.conf");
+                Files.createDirectories(path.getParent());
+                Files.createFile(path);
+                f.writeArrayListToFile(configFile, "/etc/SambaExpress/SamEx.conf");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
 
