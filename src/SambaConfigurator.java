@@ -912,6 +912,8 @@ class Window extends JFrame
         jtextFieldComputersName.setVisible(false);
         jTextFieldDomainname.setVisible(false);
         jTextFieldFullName.setVisible(false);
+
+        buttonUserManager.setEnabled(false);
     }
 
     void showInstallation()
@@ -956,7 +958,7 @@ class Window extends JFrame
         }
 
         this.setResizable(false);
-        setSize(700,480);
+        setSize(690,345);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setLayout(null);
 
@@ -1062,7 +1064,7 @@ class Window extends JFrame
         buttonUserManager.setBounds(160, 290, 140, 20);
         ActionListener buttonUsers = new ButtonUsers();
         buttonUserManager.addActionListener(buttonUsers);
-        //buttonUserManager.setEnabled(false);
+        buttonUserManager.setEnabled(false);
         this.add(buttonUserManager);
 
         Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize();
