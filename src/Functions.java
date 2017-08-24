@@ -227,7 +227,6 @@ public class Functions
 
     boolean checkPassword(String password)
     {
-        System.out.println("----------");
         boolean answer = true;
         if(password.length() >=8)
         {
@@ -255,7 +254,6 @@ public class Functions
         {
             answer = false;
         }
-        System.out.println(answer);
         return answer;
     }
 }

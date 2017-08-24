@@ -351,7 +351,7 @@ class Window extends JFrame
             boolean correct = false;
             while(!correct)
             {
-                password = JOptionPane.showInputDialog(null, "Input new administrator passwprd:" +
+                password = JOptionPane.showInputDialog(null, "Input new administrator password:" +
                         "\n\nWarning! 8 letters length min, uppercase, lowercase, digits");
                 correct = f.checkPassword(password);
                 if(!correct) JOptionPane.showMessageDialog(null, "Password isn't strong enough");

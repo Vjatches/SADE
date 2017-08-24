@@ -115,6 +115,8 @@ public class UserManager extends JDialog
                         {
                             JOptionPane.showMessageDialog(null, s);
                         }
+                        jTextFieldUsername.setText("");
+                        jTextFieldPassword.setText("");
                     }
                     catch(IOException e)
                     {
@@ -169,7 +171,19 @@ public class UserManager extends JDialog
             if(!selectedUser.equals("")) {
                 int reply = JOptionPane.showConfirmDialog(null, "Change password for user \"" + selectedUser + "\"?", "Change password", JOptionPane.YES_NO_OPTION);
                 if (reply == JOptionPane.YES_OPTION) {
-                    String newPassword = JOptionPane.showInputDialog(null, "Input new password for\"" + selectedUser + "\":");
+
+                    boolean correct = true;
+                    String newPassword = "";
+                    while(!correct)
+                    {
+                        newPassword = JOptionPane.showInputDialog(null, "Input new password for\"" + selectedUser + "\":");
+                        correct = f.checkPassword(newPassword);
+                        if(!correct)
+                        {
+                            JOptionPane.showMessageDialog(null, "Password isn't strong enough");
+                        }
+                    }
+
                     String s = null;
                     try {
                         Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "samba-tool user setpassword " + selectedUser + " --newpassword=" + newPassword});
