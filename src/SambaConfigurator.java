@@ -1072,7 +1072,7 @@ class Window extends JFrame
         buttonUserManager.setBounds(160, 290, 140, 20);
         ActionListener buttonUsers = new ButtonUsers();
         buttonUserManager.addActionListener(buttonUsers);
-        //buttonUserManager.setEnabled(false);
+        buttonUserManager.setEnabled(false);
         this.add(buttonUserManager);
 
         Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize();
