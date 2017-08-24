@@ -2,6 +2,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -9,6 +11,7 @@ import java.util.ArrayList;
 
 public class UserManager extends JDialog
 {
+    Functions f = new Functions();
     JScrollPane scrollUsers = new JScrollPane();
     DefaultListModel listModel = new DefaultListModel<>();
     JList listUsers = new JList(listModel);
@@ -20,12 +23,17 @@ public class UserManager extends JDialog
     JTextField jTextFieldUsername = new JTextField();
     JTextField jTextFieldPassword = new JTextField();
 
+    JCheckBox checkboxNoExpiry = new JCheckBox("No expiry password");
+    JCheckBox checkboxChangePassAfterLogin = new JCheckBox("Change password after login");
+    JLabel labelPasswordExpires = new JLabel("Password expires in");
+    JSpinner spinnerDays = new JSpinner();
+    JLabel labelDays = new JLabel("days");
+
     JButton buttonAdd = new JButton("Add");
     JButton buttonClear = new JButton("Clear");
 
     JButton buttonRemove = new JButton("Remove");
     JButton buttonChangePassword = new JButton("New password");
-
 
     public void updateUserList()
     {
@@ -67,22 +75,51 @@ public class UserManager extends JDialog
             else if(password.isEmpty())
             {
                 JOptionPane.showMessageDialog(null, "Password can't be empty");
+
             }
             else
             {
-                String s = null;
-                try
+                boolean correct = f.checkPassword(password);
+                if(!correct)
                 {
-                    Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "samba-tool user add " + username + " " + password});
-                    BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
-                    while ((s = stdInput.readLine()) != null)
-                    {
-                        JOptionPane.showMessageDialog(null, s);
-                    }
+                    JOptionPane.showMessageDialog(null, "Password isn't strong enough");
                 }
-                catch(IOException e)
+                else
                 {
-                    e.printStackTrace();
+                    String s = null;
+                    try
+                    {
+                        String command = "samba-tool user add " + username + " " + password;
+                        if(checkboxChangePassAfterLogin.isSelected()) command = command + " --must-change-at-next-login";
+
+                        Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", command});
+                        BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                        while ((s = stdInput.readLine()) != null)
+                        {
+                            JOptionPane.showMessageDialog(null, s);
+                        }
+
+                        command = "samba-tool user setexpiry " + username;
+                        if(checkboxNoExpiry.isSelected())
+                        {
+                            command = command + " --noexpiry";
+                        }
+                        else
+                        {
+                            String days = spinnerDays.getValue().toString();
+                            command = command + " --days="+days;
+                        }
+                        p = Runtime.getRuntime().exec(new String[]{"bash", "-c", command});
+                        stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                        while ((s = stdInput.readLine()) != null)
+                        {
+                            JOptionPane.showMessageDialog(null, s);
+                        }
+                    }
+                    catch(IOException e)
+                    {
+                        e.printStackTrace();
+                    }
                 }
                 updateUserList();
             }
@@ -148,6 +185,21 @@ public class UserManager extends JDialog
         }
     }
 
+    class EnableNoExpiry implements ItemListener{
+        @Override
+        public void itemStateChanged(ItemEvent itemEvent)
+        {
+            if(checkboxNoExpiry.isSelected())
+            {
+                spinnerDays.setEnabled(false);
+            }
+            else
+            {
+                spinnerDays.setEnabled(true);
+            }
+        }
+    }
+
     UserManager()
     {
         super();
@@ -183,11 +235,27 @@ public class UserManager extends JDialog
         jTextFieldPassword.setBounds(430, 70, 150, 20);
         this.add(jTextFieldPassword);
 
-        buttonAdd.setBounds(320,100 , 125, 20);
+        checkboxChangePassAfterLogin.setBounds(320, 100, 300, 20);
+        this.add(checkboxChangePassAfterLogin);
+        checkboxNoExpiry.setBounds(320, 130, 300, 20 );
+        ItemListener noExpiryListener = new EnableNoExpiry();
+        checkboxNoExpiry.addItemListener(noExpiryListener);
+        checkboxNoExpiry.setSelected(true);
+        this.add(checkboxNoExpiry);
+        labelPasswordExpires.setBounds(320, 160, 150, 20);
+        this.add(labelPasswordExpires);
+        SpinnerModel spinnerModelDays = new SpinnerNumberModel(41, 1, 365, 1);
+        spinnerDays.setModel(spinnerModelDays);
+        spinnerDays.setBounds(470, 160, 40, 20);
+        this.add(spinnerDays);
+        labelDays.setBounds(520, 160, 50, 20);
+        this.add(labelDays);
+
+        buttonAdd.setBounds(320,190, 125, 20);
         ActionListener addUser = new AddUserButton();
         buttonAdd.addActionListener(addUser);
         this.add(buttonAdd);
-        buttonClear.setBounds(455, 100, 125, 20);
+        buttonClear.setBounds(455, 190, 125, 20);
         ActionListener clearData = new ClearButton();
         buttonClear.addActionListener(clearData);
         this.add(buttonClear);

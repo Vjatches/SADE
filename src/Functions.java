@@ -224,4 +224,38 @@ public class Functions
             return false;
         }
     }
+
+    boolean checkPassword(String password)
+    {
+        System.out.println("----------");
+        boolean answer = true;
+        if(password.length() >=8)
+        {
+            if(!password.matches(".*[\\s].*"))
+            {
+                if(!password.matches(".*[0-9].*"))
+                {
+                    answer = false;
+                }
+                if(!password.matches(".*[a-z].*"))
+                {
+                    answer = false;
+                }
+                if(!password.matches(".*[A-Z].*"))
+                {
+                    answer = false;
+                }
+            }
+            else
+            {
+                answer = false;
+            }
+        }
+        else
+        {
+            answer = false;
+        }
+        System.out.println(answer);
+        return answer;
+    }
 }

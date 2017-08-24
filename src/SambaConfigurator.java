@@ -347,8 +347,16 @@ class Window extends JFrame
                 e.printStackTrace();
             }
 
-            String password = JOptionPane.showInputDialog(null, "Input new administrator passwprd:" +
-                    "\n\nWarning! 8 letters length min, uppercase, lowercase, digits");
+            String password = "";
+            boolean correct = false;
+            while(!correct)
+            {
+                password = JOptionPane.showInputDialog(null, "Input new administrator passwprd:" +
+                        "\n\nWarning! 8 letters length min, uppercase, lowercase, digits");
+                correct = f.checkPassword(password);
+                if(!correct) JOptionPane.showMessageDialog(null, "Password isn't strong enough");
+            }
+
 
             String[] tmp = domainname.split("\\.");
             String shortName = tmp[0].toUpperCase();
@@ -1064,7 +1072,7 @@ class Window extends JFrame
         buttonUserManager.setBounds(160, 290, 140, 20);
         ActionListener buttonUsers = new ButtonUsers();
         buttonUserManager.addActionListener(buttonUsers);
-        buttonUserManager.setEnabled(false);
+        //buttonUserManager.setEnabled(false);
         this.add(buttonUserManager);
 
         Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize();
