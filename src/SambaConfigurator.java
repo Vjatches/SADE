@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 class Window extends JFrame
 {
@@ -614,8 +615,6 @@ class Window extends JFrame
 
                 domainname = jTextFieldDomainname.getText();
                 String[] testDomainName = domainname.split("\\.");
-
-
                 if(testDomainName.length <2 )
                 {
                     if(!domainname.equals(""))
@@ -1122,10 +1121,926 @@ class Window extends JFrame
     }
 }
 
+class NoGuiFunctions
+{
+    boolean checkRoot()
+    {
+        String s = null;
+        try
+        {
+            Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "id -u"});
+            BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            s = stdInput.readLine();
+        }
+        catch(IOException e)
+        {
+            System.out.println("exception happened - heres what i know:");
+            e.printStackTrace();
+        }
+        if(s.equals("0")) return true;
+        else return false;
+    }
+}
+
 public class SambaConfigurator
 {
     public static void main(String[] args)
     {
-        new Window();
+        try
+        {
+            if(args[0].equals("nogui"))
+            {
+                NoGuiFunctions noGuifunctions = new NoGuiFunctions();
+
+                boolean root = noGuifunctions.checkRoot();
+                if(!root)
+                {
+                    System.out.println("No root permissions. Run application via terminal with sudo or using superuser");
+                    System.exit(-1);
+                }
+
+                File configFilePath = new File("/etc/SambaExpress/SamEx.conf");
+                ArrayList<String> configFile = new ArrayList<String>();
+                Functions f = new Functions();
+
+                if(configFilePath.exists())
+                {
+                    try {
+                        configFile = f.readFileToArrayList("/etc/SambaExpress/SamEx.conf");
+                        String[] sambaStatus = configFile.get(0).split("=");
+                        if(sambaStatus[1].equals("no")) System.out.println("Samba is not configured\n");
+                        else
+                        {
+                            if(sambaStatus[1].equals("yes"))
+                            {
+                                String[] sambaVersion = configFile.get(1).split("=");
+                                System.out.println("Samba installed.\nVersion " + sambaVersion[1]);
+                                //buttonUserManager.setEnabled(true);
+                            }
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+
+                    }
+                }
+                else
+                {
+                    configFile.add("SambaConfigured=no");
+                    configFile.add("SambaVersion=0");
+                    System.out.println("First launch detected.\nSamba is not configured");
+                    try {
+                        configFilePath.getParentFile().mkdirs();
+                        Path path = Paths.get("/etc/SambaExpress/SamEx.conf");
+                        Files.createDirectories(path.getParent());
+                        Files.createFile(path);
+                        f.writeArrayListToFile(configFile, "/etc/SambaExpress/SamEx.conf");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                Scanner keyScanner = new Scanner(System.in);
+                int menu = -1;
+                do
+                {
+                    System.out.print("\033[H\033[2J");
+                    System.out.println("-----------------------------------------");
+                    System.out.println("Welcome to Samba configurator");
+                    System.out.println("-----------------------------------------");
+                    System.out.println("Menu:");
+                    System.out.println("1. Show app configuration");
+                    System.out.println("2. Configure Samba as a domain controller");
+                    System.out.println("3. User accounts manager");
+                    System.out.println("\n0. Exit");
+                    System.out.println("-----------------------------------------");
+                    System.out.print("Your choice: ");
+                    menu = keyScanner.nextInt();
+
+                    switch(menu)
+                    {
+                        case 1:
+                        {
+                            String[] tmp = configFile.get(0).split("=");
+                            String sambaConfigured = tmp[1];
+                            tmp = configFile.get(1).split("=");
+                            String sambaVersion =  tmp[1];
+                            System.out.print("\033[H\033[2J");
+
+                            if(sambaConfigured.equals("no"))
+                            {
+                                System.out.println("Samba wasn't configured");
+                            }
+                            else
+                            {
+                                System.out.println("Samba configured");
+                                System.out.println("Installed version: " + sambaVersion);
+                            }
+
+                            System.out.println("Press 'Enter' key to continue");
+                            try {
+                                System.in.read();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            break;
+                        }
+
+                        case 2:
+                        {
+                            String[] tmp = configFile.get(0).split("=");
+                            boolean isConfigured;
+                            boolean configPermit = false;
+                            if(tmp[1].equals("yes"))
+                            {
+                                isConfigured = true;
+                            }
+                            else
+                            {
+                                isConfigured = false;
+                            }
+                            System.out.print("\033[H\033[2J");
+                            if(isConfigured)
+                            {
+                                System.out.println("Samba AD DC already configured.\nType 'yes' if you want to reconfigure it.\nType 'no' to cancel.");
+                                System.out.print("Your choice: ");
+                                String answer = keyScanner.next();
+                                if(answer.equals("yes"))
+                                {
+                                    configPermit = true;
+                                }
+                                else
+                                {
+                                    configPermit = false;
+                                }
+                            }
+                            else
+                            {
+                                configPermit = true;
+                            }
+                            if(configPermit)
+                            {
+                                System.out.print("\033[H\033[2J");
+                                System.out.println("Getting recommended settinds...");
+                                //Считываем файл в память
+                                ArrayList<String> interfacesFile = new ArrayList<String>();
+                                ArrayList<InterfaceData> interfaces = new ArrayList<InterfaceData>();
+                                String selectedEth = "";
+                                String selectedHostname = "";
+                                String selectedIpAddress = "";
+                                String selectedNetmask = "";
+                                String selectedBroadcast = "";
+                                String selectedGateway = "";
+                                String selectedNetwork = "";
+                                String selectedDomainName = "";
+                                String selectedFullName = "";
+                                try
+                                {
+                                    interfacesFile = f.readFileToArrayList("/etc/network/interfaces");
+                                }
+                                catch(IOException e)
+                                {
+
+                                }
+
+                                //Переменные для хранения данных о интерфейсе
+                                String interfaceName = "";
+                                int startPos = 0;
+                                int endPos = 0;
+
+                                //Поиск интерфейсов в файле
+                                for(int j = 0; j < 4; j++)
+                                {
+                                    interfaceName = "";
+                                    startPos = 0;
+                                    endPos = 0;
+
+                                    for(int i = 0; i< interfacesFile.size(); i++)
+                                    {
+                                        if(interfacesFile.get(i).equals("auto eth" + j))
+                                        {
+                                            interfaceName = "eth" + j;
+                                            startPos = i;
+                                        }
+                                        if(interfacesFile.get(i).equals("auto eth" + (j+1)))
+                                        {
+                                            endPos = i-1;
+                                        }
+                                    }
+
+                                    if((startPos != 0)&&(endPos ==0)) endPos = interfacesFile.size();
+
+                                    //Если интерфейс находит то добавляет его в список интерфейсов
+                                    if(interfaceName != "")
+                                    {
+                                        interfaces.add(new InterfaceData(interfaceName, startPos, endPos));
+                                    }
+                                }
+
+                                if(interfaces.isEmpty())
+                                {
+                                    interfaces.add(new InterfaceData("eth0", interfacesFile.size()-1, interfacesFile.size()-1));
+                                }
+                                selectedEth = interfaces.get(0).name;
+
+                                // Получаем имя машины
+
+                                ArrayList<String> hostName = new ArrayList<>();
+                                try {
+                                    hostName = f.readFileToArrayList("/etc/hostname");
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                                String[] hostNameSplit = hostName.get(0).split("\\.");
+                                selectedHostname = hostNameSplit[0];
+
+                                // Получаем ip адреса
+
+                                String ip = null;
+                                try
+                                {
+                                    Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "hostname -I"});
+                                    BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                                    ip = stdInput.readLine();
+                                    ip = ip.replaceAll(" ", "");
+                                    selectedIpAddress = ip;
+                                }
+                                catch(IOException e)
+                                {
+                                    System.out.println("exception happened - heres what i know:");
+                                    e.printStackTrace();
+                                }
+
+                                try
+                                {
+                                    Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "ip route show 0.0.0.0/0 dev eth0"});
+                                    BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                                    ip = stdInput.readLine();
+                                    tmp = ip.split(" ");
+                                    selectedGateway = tmp[2];
+                                }
+                                catch(IOException e)
+                                {
+                                    System.out.println("exception happened - heres what i know:");
+                                    e.printStackTrace();
+                                }
+                                selectedNetmask = "255.255.255.0";
+
+                                boolean checked;
+                                do
+                                {
+                                    checked = true;
+                                    System.out.print("Input domain name(ex: linux.local): ");
+                                    selectedDomainName = keyScanner.next();
+                                    String[] testDomainName = selectedDomainName.split("\\.");
+
+
+                                    if(testDomainName.length <2 )
+                                    {
+                                        if(!selectedDomainName.equals(""))
+                                        {
+                                            if(testDomainName.length == 1)
+                                            {
+                                                selectedDomainName = testDomainName[0] + "." + testDomainName[0];
+                                            }
+                                        }
+                                        else
+                                        {
+                                            checked = false;
+                                        }
+                                    }
+                                    if(!checked) System.out.println("Invalid hostname.");
+                                }
+                                while(!checked);
+
+                                selectedFullName = selectedHostname + "." + selectedDomainName;
+                                System.out.print("\033[H\033[2J");
+                                System.out.println("Parameters generated.\n");
+
+                                System.out.println("Selected parameters: ");
+                                System.out.println("Ethernet interface: " + selectedEth);
+                                System.out.println("IP address: " + selectedIpAddress);
+                                System.out.println("Netmask: " + selectedNetmask);
+                                System.out.println("Gateway: " + selectedGateway);
+                                System.out.println("Computer's name: " + selectedHostname);
+                                System.out.println("Domain name: " + selectedDomainName);
+                                System.out.println("Full name: " + selectedFullName);
+                                System.out.println("\nType 'yes' if you want to configure AD DS.");
+                                System.out.println("Type 'modify' if you want to modify selected parameters.");
+                                System.out.print("Your choice: ");
+                                String choice = keyScanner.next();
+                                if(choice.equals("modify"))
+                                {
+                                    System.out.print("\033[H\033[2J");
+                                    boolean check;
+
+                                    System.out.println("Configuring static IP address");
+                                    System.out.print("Available ethernet adapters:");
+                                    for(int i = 0; i < interfaces.size(); i++) System.out.print(interfaces.get(i).name + " ");
+                                    System.out.println();
+
+                                    do
+                                    {
+                                        System.out.print("Select ethernet adapter: ");
+                                        selectedEth = keyScanner.next();
+                                        check = true;
+                                        for(int i = 0 ; i < interfaces.size(); i++)
+                                        {
+                                            if(selectedEth.equals(interfaces.get(i).name)) check = false;
+                                        }
+                                        if(check) System.out.println("Invalid ethernet adapter");
+                                    }
+                                    while(check);
+
+                                    do
+                                    {
+                                        System.out.print("Input computer's IP address: ");
+                                        selectedIpAddress = keyScanner.next();
+                                        check = f.validIP(selectedIpAddress);
+                                        check = !check;
+                                        if(check) System.out.println("Invalid IP address");
+                                    }
+                                    while(check);
+
+                                    do
+                                    {
+                                        System.out.print("Input netmask address: ");
+                                        selectedNetmask = keyScanner.next();
+                                        check = f.validIP(selectedNetmask);
+                                        check = !check;
+                                        if(check) System.out.println("Invalid netmask");
+                                    }
+                                    while(check);
+
+                                    do
+                                    {
+                                        System.out.print("Input gateway: ");
+                                        selectedGateway = keyScanner.next();
+                                        check = f.validIP(selectedGateway);
+                                        check = !check;
+                                        if(check) System.out.println("Invalid gateway");
+                                    }
+                                    while(check);
+
+                                    do
+                                    {
+                                        System.out.print("Input hostname: ");
+                                        check = false;
+                                        selectedHostname = keyScanner.next();
+                                        String[] testComputersName = selectedHostname.split("\\.");
+                                        if(testComputersName.length > 1)
+                                        {
+                                            System.out.println("Can't include dots");
+                                            check = true;
+                                        }
+                                    }
+                                    while(check);
+
+                                    do
+                                    {
+                                        System.out.print("Input domain name: ");
+                                        selectedDomainName = keyScanner.next();
+                                        check = false;
+                                        String[] testDomainName = selectedDomainName.split("\\.");
+                                        if(testDomainName.length <2 )
+                                        {
+                                            if(!selectedDomainName.equals(""))
+                                            {
+                                                if(testDomainName.length == 1)
+                                                {
+                                                    selectedDomainName = testDomainName[0] + "." + testDomainName[0];
+                                                }
+                                            }
+                                            else
+                                            {
+                                                System.out.println("Invalid domain name");
+                                                check = true;
+                                            }
+                                        }
+                                    }
+                                    while(check);
+
+                                    selectedFullName = selectedHostname + "." + selectedDomainName;
+
+                                    System.out.print("\033[H\033[2J");
+                                    System.out.println("Parameters generated.\n");
+
+                                    System.out.println("Selected parameters: ");
+                                    System.out.println("Ethernet interface: " + selectedEth);
+                                    System.out.println("IP address: " + selectedIpAddress);
+                                    System.out.println("Netmask: " + selectedNetmask);
+                                    System.out.println("Gateway: " + selectedGateway);
+                                    System.out.println("Computer's name: " + selectedHostname);
+                                    System.out.println("Domain name: " + selectedDomainName);
+                                    System.out.println("Full name: " + selectedFullName);
+                                    System.out.println("\nPress 'Enter' key to start configuration process");
+                                    try {
+                                        System.in.read();
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                                System.out.println("Configuring...");
+
+                                System.out.println("Configuring interface...\n");
+
+                                //Ищет нужный интерфейс в списке
+                                String eth = selectedEth;
+                                int number = -1;
+                                for(int i = 0; i < interfaces.size(); i++)
+                                {
+                                    if(interfaces.get(i).name.equals(eth)) number = i;
+                                }
+
+                                //Удаляет указанный интерфейс из файла
+                                int quantity = interfaces.get(number).endPos - interfaces.get(number).startPos;
+                                for(int i = 0; i < quantity; i++) interfacesFile.remove(interfaces.get(number).startPos);
+
+                                //Генерирует адрес сети
+                                String[] mask = selectedNetmask.split("\\.");
+                                String[] ipAddr = selectedIpAddress.split("\\.");
+
+                                StringBuffer ipSubnet = new StringBuffer();
+                                for(int i = 0; i < 4; i++)
+                                {
+                                    try
+                                    {
+                                        if(ipSubnet.length()>0) ipSubnet.append('.');
+                                        ipSubnet.append(Integer.parseInt(ipAddr[i]) & Integer.parseInt(mask[i]));
+                                    }catch(Exception ex)
+                                    {
+                                        break;
+                                    }
+                                }
+                                selectedNetwork = ipSubnet.toString();
+
+                                String[] invertedMask = f.invertMask(selectedNetmask).split("\\.");
+
+                                String[] networkIp = selectedNetwork.split("\\.");
+                                StringBuffer ipBroadcast = new StringBuffer();
+                                for(int i = 0; i < 4; i++)
+                                {
+                                    try
+                                    {
+                                        if(ipBroadcast.length()>0) ipBroadcast.append('.');
+                                        ipBroadcast.append(Integer.parseInt(networkIp[i]) | Integer.parseInt(invertedMask[i]));
+                                    }catch(Exception ex)
+                                    {
+                                        break;
+                                    }
+                                }
+
+                                selectedBroadcast = ipBroadcast.toString();
+
+                                if(interfaces.get(number).startPos == interfaces.get(number).endPos)
+                                {
+                                    interfacesFile.add("");
+                                    interfacesFile.add("#The primary network intarface");
+                                    interfacesFile.add("");
+                                    interfacesFile.add("auto " + interfaces.get(number).name);
+                                    interfacesFile.add("iface " + interfaces.get(number).name + " inet static");
+                                    interfacesFile.add("");
+                                    interfacesFile.add("address " + selectedIpAddress);
+                                    interfacesFile.add("netmask " + selectedNetmask);
+                                    interfacesFile.add("network " + selectedNetwork);
+                                    interfacesFile.add("broadcast " + selectedBroadcast);
+                                    interfacesFile.add("gateway " + selectedGateway);
+                                    interfacesFile.add("dns-nameservers " + selectedIpAddress + " 8.8.8.8");
+                                    interfacesFile.add("dns-search " + selectedDomainName);
+                                    interfacesFile.add("");
+                                }
+                                else
+                                {
+                                    interfacesFile.add(interfaces.get(number).startPos, "auto " + interfaces.get(number).name);
+                                    interfacesFile.add(interfaces.get(number).startPos + 1, "iface " + interfaces.get(number).name + " inet static");
+                                    interfacesFile.add(interfaces.get(number).startPos + 2, "");
+                                    interfacesFile.add(interfaces.get(number).startPos + 3, "address " + selectedIpAddress);
+                                    interfacesFile.add(interfaces.get(number).startPos + 4, "netmask " + selectedNetmask);
+                                    interfacesFile.add(interfaces.get(number).startPos + 5, "network " + selectedNetwork);
+                                    interfacesFile.add(interfaces.get(number).startPos + 6, "broadcast " + selectedBroadcast);
+                                    interfacesFile.add(interfaces.get(number).startPos + 7, "gateway " + selectedGateway);
+                                    interfacesFile.add(interfaces.get(number).startPos + 8, "dns-nameservers " + selectedIpAddress + " 8.8.8.8");
+                                    interfacesFile.add(interfaces.get(number).startPos + 9, "dns-search " + selectedDomainName);
+                                    interfacesFile.add(interfaces.get(number).startPos + 10, "");
+                                }
+
+                                //Записывает файл
+                                try {
+                                    f.writeArrayListToFile(interfacesFile, "/etc/network/interfaces");
+                                } catch (IOException ex) {
+                                    ex.printStackTrace();
+                                }
+
+                                System.out.println("Interface configured");
+
+                                System.out.println("Configuring /etc/hosts ...");
+                                ArrayList<String> hosts = new ArrayList<>();
+                                try
+                                {
+                                    hosts = f.readFileToArrayList("/etc/hosts");
+                                }
+                                catch (IOException e)
+                                {
+                                    e.printStackTrace();
+                                }
+
+                                String[] testLine;
+                                boolean configured = false;
+                                for(int i = 0; i < hosts.size(); i++)
+                                {
+                                    if(configured) break;
+                                    testLine = hosts.get(i).split("\t");
+                                    if(testLine.length == 2)
+                                    {
+                                        if((testLine[0].equals("127.0.1.1"))||(testLine[1].equals(selectedHostname)))
+                                        {
+                                            hosts.remove(i);
+                                            hosts.add(i, selectedIpAddress + "\t" + selectedFullName);
+                                            configured = true;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                for(int i = 0; i < hosts.size(); i++)
+                                {
+                                    if(configured) break;
+                                    testLine = hosts.get(i).split("\t");
+                                    if(testLine.length == 2)
+                                    {
+                                        if(testLine[0].equals(selectedIpAddress))
+                                        {
+                                            hosts.remove(i);
+                                            hosts.add(i, selectedIpAddress + "\t" + selectedFullName);
+                                            configured = true;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                for(int i = 0; i < hosts.size(); i++)
+                                {
+                                    if(configured) break;
+                                    testLine = hosts.get(i).split("\t");
+                                    if(testLine.length == 2)
+                                    {
+                                        if((testLine[0].equals("127.0.0.1"))||(testLine[1].equals("localhost")))
+                                        {
+                                            hosts.add(i+1, selectedIpAddress + "\t" + selectedFullName);
+                                            configured = true;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                if(!configured)
+                                {
+                                    hosts.add(0, selectedIpAddress + "\t" + selectedFullName);
+                                }
+
+                                try {
+                                    f.writeArrayListToFile(hosts, "/etc/hosts");
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                                System.out.println("Configured /etc/hosts");
+
+                                System.out.println("Setting hostname...");
+                                ArrayList<String> hostname = new ArrayList<>();
+                                hostname.add(selectedFullName);
+                                try {
+                                    f.writeArrayListToFile(hostname, "/etc/hostname");
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                                System.out.println("Hostname set");
+
+                                System.out.println("Updating packages...");
+                                String s = null;
+                                try
+                                {
+                                    Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "apt-get update"});
+                                    BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                                    BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+                                    while ((s = stdInput.readLine()) != null)
+                                    {
+                                        System.out.println(s);
+                                    }
+                                    while ((s = stdError.readLine()) != null)
+                                    {
+                                        System.out.println(s);
+                                    }
+                                }
+                                catch(IOException e)
+                                {
+                                    e.printStackTrace();
+                                }
+                                try
+                                {
+                                    Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "apt-get upgrade -y"});
+                                    BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                                    BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+                                    while ((s = stdInput.readLine()) != null)
+                                    {
+                                        System.out.println(s);
+                                    }
+                                    while ((s = stdError.readLine()) != null)
+                                    {
+                                        System.out.println(s);
+                                    }
+                                }
+                                catch(IOException e)
+                                {
+
+                                    e.printStackTrace();
+                                }
+                                System.out.println("Packages updated");
+
+                                System.out.println("Installing packages...");
+                                s = null;
+                                try
+                                {
+                                    Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "DEBIAN_FRONTEND=noninteractive apt-get -y install samba smbclient winbind krb5-user"});
+                                    BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                                    BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+                                    while ((s = stdInput.readLine()) != null)
+                                    {
+                                        System.out.println(s);
+                                    }
+                                    while ((s = stdError.readLine()) != null)
+                                    {
+                                        System.out.println(s);
+                                    }
+                                }
+                                catch(IOException e)
+                                {
+                                    e.printStackTrace();
+                                }
+                                System.out.println("Packages Installed");
+
+                                System.out.println("Configuring Samba...");
+
+                                s = null;
+                                try
+                                {
+                                    Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "rm /etc/samba/smb.conf"});
+                                    BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                                    BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+                                    while ((s = stdInput.readLine()) != null)
+                                    {
+                                        System.out.println(s);
+                                    }
+                                    while ((s = stdError.readLine()) != null)
+                                    {
+                                        System.out.println(s);
+                                    }
+                                }
+                                catch(IOException e)
+                                {
+                                    e.printStackTrace();
+                                }
+
+                                String password = "";
+                                boolean correct = false;
+                                while(!correct)
+                                {
+                                    System.out.println("Input new administrator password: \nWarning! 8 letters length min, uppercase, lowercase, digits");
+                                    password = keyScanner.next();
+                                    correct = f.checkPassword(password);
+                                    if(!correct) JOptionPane.showMessageDialog(null, "Password isn't strong enough");
+                                }
+
+
+                                tmp = selectedDomainName.split("\\.");
+                                String shortName = tmp[0].toUpperCase();
+
+
+                                System.out.println("samba-tool domain provision --realm=" + selectedDomainName + " " +
+                                        "--domain=" + shortName + " --adminpass=\"" + password + "\" --server-role=dc " +
+                                        "--dns-backend=SAMBA_INTERNAL");
+
+                                try
+                                {
+                                    Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "samba-tool domain provision --realm=" + selectedDomainName + " " +
+                                            "--domain=" + shortName + " --adminpass=\"" + password + "\" --server-role=dc " +
+                                            "--dns-backend=SAMBA_INTERNAL"});
+                                    BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                                    BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+                                    while ((s = stdInput.readLine()) != null)
+                                    {
+                                        System.out.println(s);
+                                    }
+                                    while ((s = stdError.readLine()) != null)
+                                    {
+                                        System.out.println(s);
+                                    }
+                                }
+                                catch(IOException e)
+                                {
+                                    e.printStackTrace();
+                                }
+
+                                System.out.println("Samba configured");
+
+                                System.out.println("Configuring Kerberos5...");
+                                s = null;
+                                try
+                                {
+                                    Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "cp /var/lib/samba/private/krb5.conf /etc/krb5.conf"});
+                                    BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                                    BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+                                    while ((s = stdInput.readLine()) != null)
+                                    {
+                                        System.out.println(s);
+                                    }
+                                    while ((s = stdError.readLine()) != null)
+                                    {
+                                        System.out.println(s);
+                                    }
+                                }
+                                catch(IOException e)
+                                {
+                                    e.printStackTrace();
+                                }
+
+                                ArrayList<String> kerberosConfig = new ArrayList<String>();
+                                try {
+                                    kerberosConfig = f.readFileToArrayList("/etc/krb5.conf");
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                                kerberosConfig.add("[realms]");
+                                kerberosConfig.add("\t" + selectedDomainName.toUpperCase() + " = {");
+                                kerberosConfig.add("\t\t kdc = " + selectedFullName);
+                                kerberosConfig.add("\t\t admin_server = " + selectedFullName);
+                                kerberosConfig.add("\t}");
+                                try {
+                                    f.writeArrayListToFile(kerberosConfig, "/etc/krb5.conf");
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+
+                                System.out.println("Kerberos5 configured\n");
+
+                                System.out.println("Configuring resolv.conf...\n");
+                                ArrayList<String> resolvConf = new ArrayList<String>();
+                                try {
+                                    resolvConf = f.readFileToArrayList("/etc/resolv.conf");
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+
+                                boolean conf = false;
+                                for(int i = 0; i < resolvConf.size(); i++)
+                                {
+                                    String[] line = resolvConf.get(i).split(" ");
+                                    if(line[0].equals("domain"))
+                                    {
+                                        resolvConf.remove(i);
+                                        resolvConf.add(i, "domain " + selectedDomainName.toUpperCase());
+                                        conf = true;
+                                    }
+                                }
+                                if(!conf)
+                                {
+                                    resolvConf.add("domain " + selectedDomainName.toUpperCase());
+                                }
+
+                                try {
+                                    f.writeArrayListToFile(resolvConf,"/etc/resolv.conf");
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                                System.out.println("resolv.conf configured");
+
+                                System.out.println("Generating directory...\n");
+                                s = null;
+                                try
+                                {
+                                    Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "mkdir -m 770 /Users"});
+                                    BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                                    BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+                                    while ((s = stdInput.readLine()) != null)
+                                    {
+                                        System.out.println(s);
+                                    }
+                                    while ((s = stdError.readLine()) != null)
+                                    {
+                                        System.out.println(s);
+                                    }
+                                }
+                                catch(IOException e)
+                                {
+                                    e.printStackTrace();
+                                }
+
+                                try
+                                {
+                                    Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "chmod g+s /Users"});
+                                    BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                                    BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+                                    while ((s = stdInput.readLine()) != null)
+                                    {
+                                        System.out.println(s);
+                                    }
+                                    while ((s = stdError.readLine()) != null)
+                                    {
+                                        System.out.println(s);
+                                    }
+                                }
+                                catch(IOException e)
+                                {
+                                    e.printStackTrace();
+                                }
+
+                                try
+                                {
+                                    Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "chown root:users /Users"});
+                                    BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                                    BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+                                    while ((s = stdInput.readLine()) != null)
+                                    {
+                                        System.out.println(s);
+                                    }
+                                    while ((s = stdError.readLine()) != null)
+                                    {
+                                        System.out.println(s);
+                                    }
+                                }
+                                catch(IOException e)
+                                {
+                                    e.printStackTrace();
+                                }
+                                System.out.println("Directory generated");
+
+                                System.out.print("Samba post-configuring...");
+                                ArrayList<String> smbConf = new ArrayList<>();
+                                try {
+                                    smbConf = f.readFileToArrayList("/etc/samba/smb.conf");
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+
+                                for(int i = 0; i < smbConf.size(); i++)
+                                {
+                                    String line = smbConf.get(i);
+                                    line = line.replaceAll("\t", "");
+                                    line = line.replaceAll(" ", "");
+                                    String[] lineSeparate = line.split("=");
+                                    if(lineSeparate[0].equals("dnsforwarder"))
+                                    {
+                                        smbConf.remove(i);
+                                        smbConf.add(i, "\tdns forwarder = 8.8.8.8");
+                                    }
+                                }
+
+                                smbConf.add("");
+                                smbConf.add("[Users]");
+                                smbConf.add("\tdirectory_mode: parameter = 0700");
+                                smbConf.add("\tread only = no");
+                                smbConf.add("\tpath = /Users");
+                                smbConf.add("\tcsc policy = documents");
+
+                                try {
+                                    f.writeArrayListToFile(smbConf, "/etc/samba/smb.conf");
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                                System.out.println("Samba post-configured");
+
+                                System.out.println("\n");
+                                System.out.println("Configuration completed");
+                                System.out.println("Please reboot your system to activating AD DC");
+                                System.out.print("Press 'Enter' key to continue");
+                                try
+                                {
+                                    System.in.read();
+                                }
+                                catch(IOException e)
+                                {
+
+                                }
+                            }
+                            break;
+                        }
+
+                        case 3:
+                        {
+                            break;
+                        }
+
+                        case 0:
+                        {
+                            System.out.print("\033[H\033[2J");
+                            break;
+                        }
+                    }
+                }
+                while(menu!=0);
+            }
+        }
+        catch(ArrayIndexOutOfBoundsException e)
+        {
+            new Window();
+        }
     }
 }
