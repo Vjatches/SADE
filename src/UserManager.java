@@ -32,6 +32,8 @@ public class UserManager extends JDialog
     JButton buttonAdd = new JButton("Add");
     JButton buttonClear = new JButton("Clear");
 
+    JButton buttonShowPasswordSettings = new JButton("Show password settings");
+
     JButton buttonRemove = new JButton("Remove");
     JButton buttonChangePassword = new JButton("New password");
 
@@ -147,28 +149,36 @@ public class UserManager extends JDialog
         @Override
         public void actionPerformed(ActionEvent actionEvent)
         {
-            String selectedUser = listUsers.getSelectedValue().toString();
-            if (!selectedUser.equals(""))
+            try
             {
-                int reply = JOptionPane.showConfirmDialog(null, "Remove user \"" + selectedUser + "\"?", "choose one", JOptionPane.YES_NO_OPTION);
-                if (reply == JOptionPane.YES_OPTION)
+                String selectedUser = listUsers.getSelectedValue().toString();
+                if (!selectedUser.equals(""))
                 {
-                    String s = null;
-                    try
+                    int reply = JOptionPane.showConfirmDialog(null, "Remove user \"" + selectedUser + "\"?", "choose one", JOptionPane.YES_NO_OPTION);
+                    if (reply == JOptionPane.YES_OPTION)
                     {
-                        Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "samba-tool user delete " + selectedUser});
-                        BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
-                        while ((s = stdInput.readLine()) != null) {
-                            JOptionPane.showMessageDialog(null, s);
+                        String s = null;
+                        try
+                        {
+                            Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "samba-tool user delete " + selectedUser});
+                            BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                            while ((s = stdInput.readLine()) != null) {
+                                JOptionPane.showMessageDialog(null, s);
+                            }
                         }
+                        catch (IOException e)
+                        {
+                            e.printStackTrace();
+                        }
+                        updateUserList();
                     }
-                    catch (IOException e)
-                    {
-                        e.printStackTrace();
-                    }
-                    updateUserList();
                 }
             }
+            catch(NullPointerException ex)
+            {
+                JOptionPane.showMessageDialog(null, "User is not selected");
+            }
+
         }
     }
 
@@ -177,35 +187,43 @@ public class UserManager extends JDialog
         @Override
         public void actionPerformed(ActionEvent actionEvent)
         {
-            String selectedUser = listUsers.getSelectedValue().toString();
-            if(!selectedUser.equals("")) {
-                int reply = JOptionPane.showConfirmDialog(null, "Change password for user \"" + selectedUser + "\"?", "Change password", JOptionPane.YES_NO_OPTION);
-                if (reply == JOptionPane.YES_OPTION) {
+            try
+            {
+                String selectedUser = listUsers.getSelectedValue().toString();
+                if(!selectedUser.equals("")) {
+                    int reply = JOptionPane.showConfirmDialog(null, "Change password for user \"" + selectedUser + "\"?", "Change password", JOptionPane.YES_NO_OPTION);
+                    if (reply == JOptionPane.YES_OPTION) {
 
-                    boolean correct = true;
-                    String newPassword = "";
-                    while(!correct)
-                    {
-                        newPassword = JOptionPane.showInputDialog(null, "Input new password for\"" + selectedUser + "\":");
-                        correct = f.checkPassword(newPassword);
-                        if(!correct)
+                        boolean correct = true;
+                        String newPassword = "";
+                        while(!correct)
                         {
-                            JOptionPane.showMessageDialog(null, "Password isn't strong enough");
+                            newPassword = JOptionPane.showInputDialog(null, "Input new password for\"" + selectedUser + "\":");
+                            correct = f.checkPassword(newPassword);
+                            if(!correct)
+                            {
+                                JOptionPane.showMessageDialog(null, "Password isn't strong enough");
+                            }
                         }
-                    }
 
-                    String s = null;
-                    try {
-                        Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "samba-tool user setpassword " + selectedUser + " --newpassword=" + newPassword});
-                        BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
-                        while ((s = stdInput.readLine()) != null) {
-                            JOptionPane.showMessageDialog(null, s);
+                        String s = null;
+                        try {
+                            Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "samba-tool user setpassword " + selectedUser + " --newpassword=" + newPassword});
+                            BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                            while ((s = stdInput.readLine()) != null) {
+                                JOptionPane.showMessageDialog(null, s);
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
-                    } catch (IOException e) {
-                        e.printStackTrace();
                     }
                 }
             }
+            catch(NullPointerException ex)
+            {
+                JOptionPane.showMessageDialog(null, "User is not selected");
+            }
+
         }
     }
 
@@ -214,6 +232,25 @@ public class UserManager extends JDialog
         public void actionPerformed(ActionEvent e)
         {
             new GroupsManager();
+        }
+    }
+
+    class ShowPasswordSettings implements ActionListener
+    {
+        public void actionPerformed(ActionEvent e)
+        {
+            String answer = "";
+            String s = null;
+            try {
+                Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "samba-tool domain passwordsettings show"});
+                BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                while ((s = stdInput.readLine()) != null) {
+                    answer = answer + s + "\n";
+                }
+                JOptionPane.showMessageDialog(null, answer);
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
         }
     }
 
@@ -281,7 +318,7 @@ public class UserManager extends JDialog
         this.add(checkboxNoExpiry);
         labelPasswordExpires.setBounds(320, 160, 150, 20);
         this.add(labelPasswordExpires);
-        SpinnerModel spinnerModelDays = new SpinnerNumberModel(41, 1, 365, 1);
+        SpinnerModel spinnerModelDays = new SpinnerNumberModel(41, 1, 42, 1);
         spinnerDays.setModel(spinnerModelDays);
         spinnerDays.setBounds(470, 160, 40, 20);
         this.add(spinnerDays);
@@ -297,6 +334,10 @@ public class UserManager extends JDialog
         buttonClear.addActionListener(clearData);
         this.add(buttonClear);
 
+        buttonShowPasswordSettings.setBounds(320, 350, 260, 20);
+        ActionListener showPasswordSettings = new ShowPasswordSettings();
+        buttonShowPasswordSettings.addActionListener(showPasswordSettings);
+        this.add(buttonShowPasswordSettings);
 
         updateUserList();
 

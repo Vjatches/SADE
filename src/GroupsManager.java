@@ -126,27 +126,34 @@ public class GroupsManager extends JDialog
     {
         public void actionPerformed(ActionEvent e)
         {
-            String selectedGroup = listGroups.getSelectedValue().toString();
-            if (!selectedGroup.equals(""))
+            try
             {
-                int reply = JOptionPane.showConfirmDialog(null, "Remove group \"" + selectedGroup + "\"?", "Choose one", JOptionPane.YES_NO_OPTION);
-                if (reply == JOptionPane.YES_OPTION)
+                String selectedGroup = listGroups.getSelectedValue().toString();
+                if (!selectedGroup.equals(""))
                 {
-                    String s = null;
-                    try
+                    int reply = JOptionPane.showConfirmDialog(null, "Remove group \"" + selectedGroup + "\"?", "Choose one", JOptionPane.YES_NO_OPTION);
+                    if (reply == JOptionPane.YES_OPTION)
                     {
-                        Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "samba-tool group delete \"" + selectedGroup + "\""});
-                        BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
-                        while ((s = stdInput.readLine()) != null) {
-                            JOptionPane.showMessageDialog(null, s);
+                        String s = null;
+                        try
+                        {
+                            Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "samba-tool group delete \"" + selectedGroup + "\""});
+                            BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                            while ((s = stdInput.readLine()) != null) {
+                                JOptionPane.showMessageDialog(null, s);
+                            }
                         }
+                        catch (IOException ex)
+                        {
+                            ex.printStackTrace();
+                        }
+                        updateGroupsList();
                     }
-                    catch (IOException ex)
-                    {
-                        ex.printStackTrace();
-                    }
-                    updateGroupsList();
                 }
+            }
+            catch(NullPointerException ex)
+            {
+                JOptionPane.showMessageDialog(null, "Group is not selected");
             }
         }
     }
@@ -181,9 +188,8 @@ public class GroupsManager extends JDialog
             }
             catch(NullPointerException e)
             {
-
+                JOptionPane.showMessageDialog(null, "Group or user is not selected");
             }
-
         }
     }
 
@@ -217,7 +223,7 @@ public class GroupsManager extends JDialog
             }
             catch(NullPointerException exe)
             {
-
+                JOptionPane.showMessageDialog(null, "Group is not selected");
             }
         }
     }
