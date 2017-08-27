@@ -58,6 +58,8 @@ class Window extends JFrame
     JButton buttonConfigureEthernet = new JButton("Configure");
     JButton buttonUserManager = new JButton("User accounts");
 
+    JButton buttonSambaInfo = new JButton("Get info about AD DC in the network");
+
     File configFilePath = new File("/etc/SambaExpress/SamEx.conf");
     ArrayList<String> configFile = new ArrayList<String>();
 
@@ -727,6 +729,7 @@ class Window extends JFrame
                 buttonRunCommand.setEnabled(true);
             }
         }
+
         public void actionPerformed(ActionEvent e)
         {
             new RunCommandThread().run();
@@ -738,6 +741,47 @@ class Window extends JFrame
         public void actionPerformed(ActionEvent e)
         {
             new UserManager();
+        }
+    }
+
+    class ButtonGetInfo implements ActionListener
+    {
+        public void actionPerformed(ActionEvent e)
+        {
+            String ip = "";
+            boolean isIp;
+            do
+            {
+                ip = jTextFieldIpAddress.getText();
+                if(!f.validIP(ip)) ip = "";
+                ip = (String)JOptionPane.showInputDialog(null, "Input ip address to get info:", "ip", JOptionPane.PLAIN_MESSAGE, null, null, ip);
+                isIp = f.validIP(ip);
+                if(!isIp) JOptionPane.showMessageDialog(null, "Invalid IP address");
+            }
+            while(!isIp);
+
+            String answer = "";
+            String s = null;
+            try
+            {
+                Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "samba-tool domain info " + ip});
+                BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+                while ((s = stdInput.readLine()) != null)
+                {
+                    answer = answer + s + "\n";
+                }
+                while ((s = stdError.readLine()) != null)
+                {
+                    answer = answer + s + "\n";
+                }
+            }
+            catch(IOException ex)
+            {
+                ex.printStackTrace();
+            }
+
+            JOptionPane.showMessageDialog(null, answer);
         }
     }
 
@@ -921,6 +965,7 @@ class Window extends JFrame
         jTextFieldFullName.setVisible(false);
 
         buttonUserManager.setEnabled(false);
+        buttonSambaInfo.setEnabled(false);
     }
 
     void showInstallation()
@@ -949,6 +994,7 @@ class Window extends JFrame
             System.out.println("exception happened - heres what i know:");
             e.printStackTrace();
         }
+        buttonSambaInfo.setEnabled(true);
 
         labelStatus.setText("Installed");
     }
@@ -965,7 +1011,7 @@ class Window extends JFrame
         }
 
         this.setResizable(false);
-        setSize(690,345);
+        setSize(690,375);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setLayout(null);
 
@@ -1053,13 +1099,13 @@ class Window extends JFrame
         scrollTerminal = new JScrollPane();
         scrollTerminal.add(jTextAreaAppOutput);
         scrollTerminal.setViewportView(jTextAreaAppOutput);
-        scrollTerminal.setBounds(320, 10, 360, 260);
+        scrollTerminal.setBounds(320, 10, 360, 300);
         this.add(scrollTerminal);
         jTextAreaAppOutput.append("Ready\n");
 
-        jTextFieldCommandLine.setBounds(320, 290, 260, 20);
+        jTextFieldCommandLine.setBounds(320, 320, 260, 20);
         this.add(jTextFieldCommandLine);
-        buttonRunCommand.setBounds(590, 290, 90, 20);
+        buttonRunCommand.setBounds(590, 320, 90, 20);
         ActionListener runCommand = new RunCommand();
         buttonRunCommand.addActionListener(runCommand);
         this.add(buttonRunCommand);
@@ -1073,6 +1119,11 @@ class Window extends JFrame
         buttonUserManager.addActionListener(buttonUsers);
         buttonUserManager.setEnabled(false);
         this.add(buttonUserManager);
+
+        buttonSambaInfo.setBounds(10, 320, 290, 20);
+        ActionListener buttonGetInfo = new ButtonGetInfo();
+        buttonSambaInfo.addActionListener(buttonGetInfo);
+        this.add(buttonSambaInfo);
 
         Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize();
         int x = (int) ((dimension.getWidth() - this.getWidth())/2);
@@ -2006,6 +2057,22 @@ public class SambaConfigurator
                                     e.printStackTrace();
                                 }
                                 System.out.println("Samba post-configured");
+
+                                String version = null;
+                                try
+                                {
+                                    Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "smbclient -V"});
+                                    BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                                    version = stdInput.readLine();
+                                    configFile.set(0, "SambaConfigured=yes");
+                                    configFile.set(1, "SambaVersion=" + version);
+                                    f.writeArrayListToFile(configFile, "/etc/SambaExpress/SamEx.conf");
+                                }
+                                catch(IOException e)
+                                {
+                                    System.out.println("exception happened - heres what i know:");
+                                    e.printStackTrace();
+                                }
 
                                 System.out.println("\n");
                                 System.out.println("Configuration completed");

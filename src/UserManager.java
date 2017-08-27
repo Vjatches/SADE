@@ -35,6 +35,8 @@ public class UserManager extends JDialog
     JButton buttonRemove = new JButton("Remove");
     JButton buttonChangePassword = new JButton("New password");
 
+    JButton buttonGroupManager = new JButton("Manage groups");
+
     public void updateUserList()
     {
         String s = null;
@@ -60,7 +62,8 @@ public class UserManager extends JDialog
         }
     }
 
-    class AddUserButton implements ActionListener{
+    class AddUserButton implements ActionListener
+    {
 
         @Override
         public void actionPerformed(ActionEvent actionEvent)
@@ -129,7 +132,8 @@ public class UserManager extends JDialog
         }
     }
 
-    class ClearButton implements ActionListener{
+    class ClearButton implements ActionListener
+    {
         @Override
         public void actionPerformed(ActionEvent actionEvent)
         {
@@ -141,19 +145,25 @@ public class UserManager extends JDialog
     class RemoveButton implements ActionListener
     {
         @Override
-        public void actionPerformed(ActionEvent actionEvent) {
+        public void actionPerformed(ActionEvent actionEvent)
+        {
             String selectedUser = listUsers.getSelectedValue().toString();
-            if (!selectedUser.equals("")) {
+            if (!selectedUser.equals(""))
+            {
                 int reply = JOptionPane.showConfirmDialog(null, "Remove user \"" + selectedUser + "\"?", "choose one", JOptionPane.YES_NO_OPTION);
-                if (reply == JOptionPane.YES_OPTION) {
+                if (reply == JOptionPane.YES_OPTION)
+                {
                     String s = null;
-                    try {
+                    try
+                    {
                         Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "samba-tool user delete " + selectedUser});
                         BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
                         while ((s = stdInput.readLine()) != null) {
                             JOptionPane.showMessageDialog(null, s);
                         }
-                    } catch (IOException e) {
+                    }
+                    catch (IOException e)
+                    {
                         e.printStackTrace();
                     }
                     updateUserList();
@@ -199,7 +209,16 @@ public class UserManager extends JDialog
         }
     }
 
-    class EnableNoExpiry implements ItemListener{
+    class GroupManagerButton implements ActionListener
+    {
+        public void actionPerformed(ActionEvent e)
+        {
+            new GroupsManager();
+        }
+    }
+
+    class EnableNoExpiry implements ItemListener
+    {
         @Override
         public void itemStateChanged(ItemEvent itemEvent)
         {
@@ -219,7 +238,7 @@ public class UserManager extends JDialog
         super();
         this.setResizable(false);
         setModal(true);
-        setSize(590, 370);
+        setSize(590, 400);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         this.setLayout(null);
 
@@ -236,6 +255,10 @@ public class UserManager extends JDialog
         ActionListener changePassword = new ChangePassword();
         buttonChangePassword.addActionListener(changePassword);
         this.add(buttonChangePassword);
+        buttonGroupManager.setBounds(10, 350, 300, 20);
+        ActionListener groupManagerButton = new GroupManagerButton();
+        buttonGroupManager.addActionListener(groupManagerButton);
+        this.add(buttonGroupManager);
 
         labelAddUser.setBounds(445, 10, 100, 20);
         this.add(labelAddUser);
@@ -273,6 +296,7 @@ public class UserManager extends JDialog
         ActionListener clearData = new ClearButton();
         buttonClear.addActionListener(clearData);
         this.add(buttonClear);
+
 
         updateUserList();
 
