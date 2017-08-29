@@ -94,7 +94,7 @@ public class UserManager extends JDialog
                     String s = null;
                     try
                     {
-                        String command = "samba-tool user add " + username + " " + password;
+                        String command = "samba-tool user add \"" + username + "\" " + password;
                         if(checkboxChangePassAfterLogin.isSelected()) command = command + " --must-change-at-next-login";
 
                         Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", command});
@@ -160,7 +160,7 @@ public class UserManager extends JDialog
                         String s = null;
                         try
                         {
-                            Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "samba-tool user delete " + selectedUser});
+                            Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "samba-tool user delete \"" + selectedUser + "\""});
                             BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
                             while ((s = stdInput.readLine()) != null) {
                                 JOptionPane.showMessageDialog(null, s);
@@ -208,7 +208,7 @@ public class UserManager extends JDialog
 
                         String s = null;
                         try {
-                            Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "samba-tool user setpassword " + selectedUser + " --newpassword=" + newPassword});
+                            Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "samba-tool user setpassword \"" + selectedUser + "\" --newpassword=" + newPassword});
                             BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
                             while ((s = stdInput.readLine()) != null) {
                                 JOptionPane.showMessageDialog(null, s);

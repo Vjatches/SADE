@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.InputMismatchException;
 import java.util.Scanner;
 
 class Window extends JFrame
@@ -1262,10 +1263,19 @@ public class SambaConfigurator
                     System.out.println("1. Show app configuration");
                     System.out.println("2. Configure Samba as a domain controller");
                     System.out.println("3. User accounts manager");
+                    System.out.println("4. Show AD DC information");
                     System.out.println("\n0. Exit");
                     System.out.println("-----------------------------------------");
                     System.out.print("Your choice: ");
-                    menu = keyScanner.nextInt();
+                    try
+                    {
+                        menu = keyScanner.nextInt();
+                    }
+                    catch(InputMismatchException e)
+                    {
+                        menu = -1;
+                    }
+
 
                     switch(menu)
                     {
@@ -1293,6 +1303,7 @@ public class SambaConfigurator
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
+
                             break;
                         }
 
@@ -1313,8 +1324,9 @@ public class SambaConfigurator
                             if(isConfigured)
                             {
                                 System.out.println("Samba AD DC already configured.\nType 'yes' if you want to reconfigure it.\nType 'no' to cancel.");
-                                System.out.print("Your choice: ");
-                                String answer = keyScanner.next();
+                                System.out.println("Your choice: ");
+                                keyScanner.nextLine();
+                                String answer = keyScanner.nextLine();
                                 if(answer.equals("yes"))
                                 {
                                     configPermit = true;
@@ -1440,8 +1452,9 @@ public class SambaConfigurator
                                 do
                                 {
                                     checked = true;
-                                    System.out.print("Input domain name(ex: linux.local): ");
-                                    selectedDomainName = keyScanner.next();
+                                    System.out.println("Input domain name(ex: linux.local): ");
+                                    keyScanner.nextLine();
+                                    selectedDomainName = keyScanner.nextLine();
                                     String[] testDomainName = selectedDomainName.split("\\.");
 
 
@@ -1477,8 +1490,9 @@ public class SambaConfigurator
                                 System.out.println("Full name: " + selectedFullName);
                                 System.out.println("\nType 'yes' if you want to configure AD DS.");
                                 System.out.println("Type 'modify' if you want to modify selected parameters.");
-                                System.out.print("Your choice: ");
-                                String choice = keyScanner.next();
+                                System.out.println("Your choice: ");
+                                keyScanner.nextLine();
+                                String choice = keyScanner.nextLine();
                                 if(choice.equals("modify"))
                                 {
                                     System.out.print("\033[H\033[2J");
@@ -1491,8 +1505,9 @@ public class SambaConfigurator
 
                                     do
                                     {
-                                        System.out.print("Select ethernet adapter: ");
-                                        selectedEth = keyScanner.next();
+                                        System.out.println("Select ethernet adapter: ");
+                                        keyScanner.nextLine();
+                                        selectedEth = keyScanner.nextLine();
                                         check = true;
                                         for(int i = 0 ; i < interfaces.size(); i++)
                                         {
@@ -1504,8 +1519,9 @@ public class SambaConfigurator
 
                                     do
                                     {
-                                        System.out.print("Input computer's IP address: ");
-                                        selectedIpAddress = keyScanner.next();
+                                        System.out.println("Input computer's IP address: ");
+                                        keyScanner.nextLine();
+                                        selectedIpAddress = keyScanner.nextLine();
                                         check = f.validIP(selectedIpAddress);
                                         check = !check;
                                         if(check) System.out.println("Invalid IP address");
@@ -1514,8 +1530,9 @@ public class SambaConfigurator
 
                                     do
                                     {
-                                        System.out.print("Input netmask address: ");
-                                        selectedNetmask = keyScanner.next();
+                                        System.out.println("Input netmask address: ");
+                                        keyScanner.nextLine();
+                                        selectedNetmask = keyScanner.nextLine();
                                         check = f.validIP(selectedNetmask);
                                         check = !check;
                                         if(check) System.out.println("Invalid netmask");
@@ -1524,8 +1541,9 @@ public class SambaConfigurator
 
                                     do
                                     {
-                                        System.out.print("Input gateway: ");
-                                        selectedGateway = keyScanner.next();
+                                        System.out.println("Input gateway: ");
+                                        keyScanner.nextLine();
+                                        selectedGateway = keyScanner.nextLine();
                                         check = f.validIP(selectedGateway);
                                         check = !check;
                                         if(check) System.out.println("Invalid gateway");
@@ -1534,9 +1552,10 @@ public class SambaConfigurator
 
                                     do
                                     {
-                                        System.out.print("Input hostname: ");
+                                        System.out.println("Input hostname: ");
                                         check = false;
-                                        selectedHostname = keyScanner.next();
+                                        keyScanner.nextLine();
+                                        selectedHostname = keyScanner.nextLine();
                                         String[] testComputersName = selectedHostname.split("\\.");
                                         if(testComputersName.length > 1)
                                         {
@@ -1548,8 +1567,9 @@ public class SambaConfigurator
 
                                     do
                                     {
-                                        System.out.print("Input domain name: ");
-                                        selectedDomainName = keyScanner.next();
+                                        System.out.println("Input domain name: ");
+                                        keyScanner.nextLine();
+                                        selectedDomainName = keyScanner.nextLine();
                                         check = false;
                                         String[] testDomainName = selectedDomainName.split("\\.");
                                         if(testDomainName.length <2 )
@@ -1855,7 +1875,8 @@ public class SambaConfigurator
                                 while(!correct)
                                 {
                                     System.out.println("Input new administrator password: \nWarning! 8 letters length min, uppercase, lowercase, digits");
-                                    password = keyScanner.next();
+                                    keyScanner.nextLine();
+                                    password = keyScanner.nextLine();
                                     correct = f.checkPassword(password);
                                     if(!correct) JOptionPane.showMessageDialog(null, "Password isn't strong enough");
                                 }
@@ -2092,6 +2113,548 @@ public class SambaConfigurator
 
                         case 3:
                         {
+                            int menu2 = -1;
+                            do
+                            {
+                                System.out.print("\033[H\033[2J");
+                                System.out.println("-----------------------------------------");
+                                System.out.println("User manager");
+                                System.out.println("-----------------------------------------");
+                                System.out.println("Menu:");
+                                System.out.println("1. List users");
+                                System.out.println("2. Add user");
+                                System.out.println("3. Change user's password");
+                                System.out.println("4. Remove user");
+                                System.out.println("5. Show user' password policy");
+                                System.out.println("6. Manage groups");
+                                System.out.println("\n0. Back");
+                                System.out.println("-----------------------------------------");
+                                System.out.print("Your choice: ");
+                                try
+                                {
+                                    menu2 = keyScanner.nextInt();
+                                }
+                                catch(InputMismatchException e)
+                                {
+                                    menu2 = -1;
+                                }
+
+                                switch(menu2)
+                                {
+                                    case 1:
+                                    {
+                                        System.out.print("\033[H\033[2J");
+                                        String s = null;
+                                        String userlist = "";
+                                        try
+                                        {
+                                            Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "samba-tool user list"});
+                                            BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                                            while ((s = stdInput.readLine()) != null)
+                                            {
+                                                userlist = userlist + s + ", ";
+                                            }
+                                        }
+                                        catch(IOException e)
+                                        {
+                                            e.printStackTrace();
+                                        }
+
+                                        if(userlist.length() > 0) userlist = userlist.substring(0,userlist.length()-2);
+                                        System.out.println(userlist);
+
+                                        System.out.println("Press 'Enter' key to continue");
+                                        try {
+                                            System.in.read();
+                                        } catch (IOException e) {
+                                            e.printStackTrace();
+                                        }
+
+                                        break;
+                                    }
+
+                                    case 2:
+                                    {
+                                        System.out.print("\033[H\033[2J");
+                                        System.out.println("Input new username: ");
+                                        keyScanner.nextLine();
+                                        String newUsername = keyScanner.nextLine();
+
+                                        boolean correct;
+                                        String newPassword = "";
+                                        do
+                                        {
+                                            System.out.println("Input new user's password: ");
+                                            keyScanner.nextLine();
+                                            newPassword = keyScanner.nextLine();
+                                            correct = f.checkPassword(newPassword);
+                                            if(!correct)
+                                            {
+                                                System.out.println("Password isn't strong enough");
+                                            }
+                                        }
+                                        while(!correct);
+
+                                        int changePassword = 0;
+                                        do
+                                        {
+                                            System.out.println("Request change password after login?(yes/no): ");
+                                            keyScanner.nextLine();
+                                            String answer = keyScanner.nextLine();
+                                            if(answer.equals("yes")) changePassword = 1;
+                                            if(answer.equals("no")) changePassword = 2;
+                                            if(changePassword == 0) System.out.println("Incorrect value");
+                                        }
+                                        while(changePassword == 0);
+
+                                        int expiryDays = -1;
+
+                                        do
+                                        {
+                                            System.out.print("Expiration of password(days, 0 - no expiry, max 42): ");
+                                            try
+                                            {
+                                                int answer = keyScanner.nextInt();
+                                                if((answer > 42)||(answer < 0)) System.out.println("Incorrect value");
+                                                else
+                                                {
+                                                    expiryDays = answer;
+                                                }
+                                            }
+                                            catch(InputMismatchException e)
+                                            {
+
+                                            }
+
+                                        }
+                                        while(expiryDays==-1);
+
+                                        String s = null;
+                                        try
+                                        {
+                                            String command = "samba-tool user add \"" + newUsername + "\" " + newPassword;
+                                            if(changePassword == 1) command = command + " --must-change-at-next-login";
+
+                                            System.out.println(command);
+                                            Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", command});
+                                            BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                                            while ((s = stdInput.readLine()) != null)
+                                            {
+                                                System.out.println(s);
+                                            }
+
+
+                                            command = "samba-tool user setexpiry " + newUsername;
+                                            if(expiryDays == 0)
+                                            {
+                                                command = command + " --noexpiry";
+                                            }
+                                            else
+                                            {
+                                                String days = "" + expiryDays;
+                                                command = command + " --days="+days;
+                                            }
+                                            p = Runtime.getRuntime().exec(new String[]{"bash", "-c", command});
+                                            stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                                            while ((s = stdInput.readLine()) != null)
+                                            {
+                                                System.out.println(s);
+                                            }
+                                            System.out.println(command);
+                                        }
+                                        catch(IOException e)
+                                        {
+                                            e.printStackTrace();
+                                        }
+
+                                        System.out.println("Press 'Enter' key to continue");
+                                        try {
+                                            System.in.read();
+                                        } catch (IOException e) {
+                                            e.printStackTrace();
+                                        }
+
+                                        break;
+                                    }
+
+                                    case 3:
+                                    {
+                                        System.out.print("\033[H\033[2J");
+                                        System.out.println("Input username: ");
+                                        keyScanner.nextLine();
+                                        String username = keyScanner.nextLine();
+
+                                        boolean correct;
+                                        String newPassword = "";
+                                        do
+                                        {
+                                            System.out.println("Input new user's password: ");
+                                            keyScanner.nextLine();
+                                            newPassword = keyScanner.nextLine();
+                                            correct = f.checkPassword(newPassword);
+                                            if(!correct)
+                                            {
+                                                System.out.println("Password isn't strong enough");
+                                            }
+                                        }
+                                        while(!correct);
+
+                                        String s = null;
+                                        try {
+                                            Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "samba-tool user setpassword \"" + username + "\" --newpassword=" + newPassword});
+                                            BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                                            while ((s = stdInput.readLine()) != null)
+                                            {
+                                                System.out.println(s);
+                                            }
+                                        } catch (IOException e) {
+                                            e.printStackTrace();
+                                        }
+
+                                        System.out.println("Press 'Enter' key to continue");
+                                        try {
+                                            System.in.read();
+                                        } catch (IOException e) {
+                                            e.printStackTrace();
+                                        }
+
+                                        break;
+                                    }
+
+                                    case 4:
+                                    {
+                                        System.out.print("\033[H\033[2J");
+                                        System.out.println("Input username who you want to delete: ");
+                                        keyScanner.nextLine();
+                                        String username = keyScanner.nextLine();
+                                        String s = null;
+                                        try
+                                        {
+                                            Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "samba-tool user delete \"" + username + "\""});
+                                            BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                                            while ((s = stdInput.readLine()) != null)
+                                            {
+                                                System.out.println(s);
+                                            }
+                                        }
+                                        catch (IOException e)
+                                        {
+                                            e.printStackTrace();
+                                        }
+
+                                        System.out.println("Press 'Enter' key to continue");
+                                        try {
+                                            System.in.read();
+                                        } catch (IOException e) {
+                                            e.printStackTrace();
+                                        }
+
+
+                                        break;
+                                    }
+
+                                    case 5:
+                                    {
+                                        String answer = "";
+                                        String s = null;
+                                        try {
+                                            Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "samba-tool domain passwordsettings show"});
+                                            BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                                            while ((s = stdInput.readLine()) != null) {
+                                                answer = answer + s + "\n";
+                                            }
+                                            System.out.println(answer);
+                                        } catch (IOException ex) {
+                                            ex.printStackTrace();
+                                        }
+
+                                        System.out.println("Press 'Enter' key to continue");
+                                        try {
+                                            System.in.read();
+                                        } catch (IOException e) {
+                                            e.printStackTrace();
+                                        }
+
+                                        break;
+                                    }
+
+                                    case 6:
+                                    {
+                                        int menu3 = -1;
+                                        do
+                                        {
+                                            System.out.print("\033[H\033[2J");
+                                            System.out.println("-----------------------------------------");
+                                            System.out.println("Group manager");
+                                            System.out.println("-----------------------------------------");
+                                            System.out.println("Menu:");
+                                            System.out.println("1. List groups");
+                                            System.out.println("2. List users of group");
+                                            System.out.println("3. Add group");
+                                            System.out.println("4. Remove group");
+                                            System.out.println("5. Add user to group");
+                                            System.out.println("6. Remove user from group");
+                                            System.out.println("\n0. Back");
+                                            System.out.println("-----------------------------------------");
+                                            System.out.print("Your choice: ");
+                                            try
+                                            {
+                                                menu3 = keyScanner.nextInt();
+                                            }
+                                            catch(InputMismatchException e)
+                                            {
+                                                menu3 = -1;
+                                            }
+
+                                            switch(menu3)
+                                            {
+                                                case 1:
+                                                {
+                                                    System.out.print("\033[H\033[2J");
+                                                    String s = null;
+                                                    String answer = "";
+                                                    try
+                                                    {
+                                                        Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "samba-tool group list"});
+                                                        BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                                                        while ((s = stdInput.readLine()) != null)
+                                                        {
+                                                            answer = answer + s + ", ";
+                                                        }
+                                                    }
+                                                    catch(IOException e)
+                                                    {
+                                                        e.printStackTrace();
+                                                    }
+                                                    if(answer.length() > 0) answer = answer.substring(0, answer.length() - 2);
+                                                    System.out.println(answer);
+
+                                                    System.out.println("Press 'Enter' key to continue");
+                                                    try {
+                                                        System.in.read();
+                                                    } catch (IOException e) {
+                                                        e.printStackTrace();
+                                                    }
+
+                                                    break;
+                                                }
+                                                case 2:
+                                                {
+                                                    System.out.print("\033[H\033[2J");
+                                                    System.out.println("Input group's name: ");
+                                                    keyScanner.nextLine();
+                                                    String group = keyScanner.nextLine();
+                                                    String s = null;
+                                                    String answer = "";
+                                                    ArrayList<String> users = new ArrayList<String>();
+                                                    try
+                                                    {
+                                                        Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "samba-tool group listmembers \"" + group + "\""});
+                                                        BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                                                        while ((s = stdInput.readLine()) != null)
+                                                        {
+                                                            answer = answer + s + ", ";
+                                                        }
+                                                        if(answer.length() > 0) answer = answer.substring(0, answer.length()-2);
+                                                    }
+                                                    catch(IOException e)
+                                                    {
+                                                        e.printStackTrace();
+                                                    }
+
+                                                    System.out.println(answer);
+
+                                                    System.out.println("Press 'Enter' key to continue");
+                                                    try {
+                                                        System.in.read();
+                                                    } catch (IOException e) {
+                                                        e.printStackTrace();
+                                                    }
+
+                                                    break;
+                                                }
+                                                case 3:
+                                                {
+                                                    System.out.print("\033[H\033[2J");
+                                                    System.out.println("Input new group's name: ");
+                                                    keyScanner.nextLine();
+                                                    String newGroup = keyScanner.nextLine();
+                                                    String s = null;
+                                                    ArrayList<String> users = new ArrayList<String>();
+                                                    try
+                                                    {
+                                                        Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "samba-tool group add \"" + newGroup + "\""});
+                                                        BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                                                        while ((s = stdInput.readLine()) != null)
+                                                        {
+                                                            System.out.println(s);
+                                                        }
+                                                    }
+                                                    catch(IOException ex)
+                                                    {
+                                                        ex.printStackTrace();
+                                                    }
+
+                                                    System.out.println("Press 'Enter' key to continue");
+                                                    try {
+                                                        System.in.read();
+                                                    } catch (IOException e) {
+                                                        e.printStackTrace();
+                                                    }
+
+                                                    break;
+                                                }
+                                                case 4:
+                                                {
+                                                    System.out.print("\033[H\033[2J");
+                                                    System.out.println("Input group's name to delete: ");
+                                                    keyScanner.nextLine();
+                                                    String group = keyScanner.nextLine();
+
+                                                    String s = null;
+                                                    try
+                                                    {
+                                                        Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "samba-tool group delete \"" + group + "\""});
+                                                        BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                                                        while ((s = stdInput.readLine()) != null) {
+                                                            System.out.println(s);
+                                                        }
+                                                    }
+                                                    catch (IOException ex)
+                                                    {
+                                                        ex.printStackTrace();
+                                                    }
+
+                                                    System.out.println("Press 'Enter' key to continue");
+                                                    try {
+                                                        System.in.read();
+                                                    } catch (IOException e) {
+                                                        e.printStackTrace();
+                                                    }
+
+                                                    break;
+                                                }
+                                                case 5:
+                                                {
+                                                    System.out.print("\033[H\033[2J");
+                                                    System.out.println("Input username: ");
+                                                    keyScanner.nextLine();
+                                                    String username = keyScanner.nextLine();
+                                                    System.out.println("Input group's name to add user into: ");
+                                                    String group = keyScanner.nextLine();
+
+                                                    String s = null;
+                                                    try
+                                                    {
+                                                        Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "samba-tool group addmembers \"" + group + "\" \"" + username + "\""});
+                                                        BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                                                        while ((s = stdInput.readLine()) != null) {
+                                                            System.out.println(s);
+                                                        }
+                                                    }
+                                                    catch (IOException exe)
+                                                    {
+                                                        exe.printStackTrace();
+                                                    }
+
+                                                    System.out.println("Press 'Enter' key to continue");
+                                                    try {
+                                                        System.in.read();
+                                                    } catch (IOException e) {
+                                                        e.printStackTrace();
+                                                    }
+
+                                                    break;
+                                                }
+                                                case 6:
+                                                {
+                                                    System.out.print("\033[H\033[2J");
+                                                    System.out.println("Input username: ");
+                                                    keyScanner.nextLine();
+                                                    String username = keyScanner.nextLine();
+                                                    System.out.println("Input group's name from what group remove user: ");
+                                                    keyScanner.nextLine();
+                                                    String group = keyScanner.nextLine();
+
+                                                    String s = null;
+                                                    try
+                                                    {
+                                                        Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "samba-tool group removemembers \"" + group + "\" \"" + username + "\""});
+                                                        BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                                                        while ((s = stdInput.readLine()) != null) {
+                                                            System.out.println(s);
+                                                        }
+                                                    }
+                                                    catch (IOException exe)
+                                                    {
+                                                        exe.printStackTrace();
+                                                    }
+
+                                                    System.out.println("Press 'Enter' key to continue");
+                                                    try {
+                                                        System.in.read();
+                                                    } catch (IOException e) {
+                                                        e.printStackTrace();
+                                                    }
+
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        while(menu3 != 0);
+                                    }
+                                }
+                            }
+                            while(menu2 != 0);
+                            break;
+                        }
+
+                        case 4:
+                        {
+                            System.out.print("\033[H\033[2J");
+                            String selectedIpAddress = "";
+                            boolean check;
+                            do
+                            {
+                                System.out.println("Input IP address: ");
+                                keyScanner.nextLine();
+                                selectedIpAddress = keyScanner.nextLine();
+                                check = f.validIP(selectedIpAddress);
+                                check = !check;
+                                if(check) System.out.println("Invalid IP address");
+                            }
+                            while(check);
+
+                            String answer = "";
+                            String s = null;
+                            try
+                            {
+                                Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "samba-tool domain info " + selectedIpAddress});
+                                BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                                BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+                                while ((s = stdInput.readLine()) != null)
+                                {
+                                    answer = answer + s + "\n";
+                                }
+                                while ((s = stdError.readLine()) != null)
+                                {
+                                    answer = answer + s + "\n";
+                                }
+                            }
+                            catch(IOException ex)
+                            {
+                                ex.printStackTrace();
+                            }
+
+                            System.out.println(answer);
+
+                            System.out.println("Press 'Enter' key to continue");
+                            try {
+                                System.in.read();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+
                             break;
                         }
 
