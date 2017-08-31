@@ -29,7 +29,7 @@ public class GroupsManager extends JDialog
     JComboBox comboBoxUsers = new JComboBox();
     JButton buttonAddUserToGroup = new JButton("Add to group");
 
-    public void updateGroupsList()
+    public void updateGroupsList() // Обновить список групп
     {
         String s = null;
         ArrayList<String> groups = new ArrayList<String>();
@@ -54,7 +54,7 @@ public class GroupsManager extends JDialog
         }
     }
 
-    public void updateUserList(String group)
+    public void updateUserList(String group) // Обновить список пользователей группы
     {
         String s = null;
         ArrayList<String> users = new ArrayList<String>();
@@ -79,7 +79,7 @@ public class GroupsManager extends JDialog
         }
     }
 
-    class ListGroupSelectListener implements ListSelectionListener
+    class ListGroupSelectListener implements ListSelectionListener // Слушатель выбора группы из списка
     {
         public void valueChanged(ListSelectionEvent e)
         {
@@ -228,7 +228,7 @@ public class GroupsManager extends JDialog
         }
     }
 
-    public void updateUsers()
+    public void updateUsers() // Обновить список пользователей
     {
         String s = null;
         ArrayList<String> users = new ArrayList<String>();
@@ -289,6 +289,9 @@ public class GroupsManager extends JDialog
         ActionListener addUserToGroup = new AddUserToGroup();
         buttonAddUserToGroup.addActionListener(addUserToGroup);
         this.add(buttonAddUserToGroup);
+
+        ImageIcon icon = new ImageIcon(Toolkit.getDefaultToolkit().createImage(Window.class.getResource("icon.png")));
+        setIconImage(icon.getImage());
 
         updateGroupsList();
 

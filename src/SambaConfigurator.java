@@ -5,6 +5,8 @@ import javax.swing.text.DefaultCaret;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.*;
 import java.net.InetAddress;
 import java.nio.file.Files;
@@ -16,64 +18,72 @@ import java.util.Scanner;
 
 class Window extends JFrame
 {
-    String ipAddress = "";
-    String netmask = "";
-    String network = "";
-    String broadcast = "";
-    String gateway = "";
-    String computersName = "";
-    String domainname = "";
-    String fullName = "";
+    //Переменные для хранения параметров настройки самбы и статичного сетевого подключения
+    private String ipAddress = "";  //Айпи адресс
+    private String netmask = "";    //Маска подсети
+    private String network = "";    //Адрес сети
+    private String broadcast = "";  //Широковещательный адрес
+    private String gateway = "";    //Шлюз
+    private String computersName = "";//Имя машины
+    private String domainname = ""; //Имя домена
+    private String fullName = "";   //Полное имя
 
-    JLabel labelIconInstall = new JLabel();
-    JLabel labelStatus = new JLabel("Working...");
+    //Подписи к форме
+    private JLabel labelIconInstall = new JLabel();
+    private JLabel labelStatus = new JLabel("Working...");
 
-    JLabel labelEthernetAdapter = new JLabel("Ethernet adapter");
-    JLabel labelIpAddress = new JLabel("IP address");
-    JLabel labelNetmask = new JLabel("Netmask");
-    JLabel labelGateway = new JLabel("Gateway");
-    JLabel labelComputersName = new JLabel("Computer's name");
-    JLabel labelDomainname = new JLabel("Domain name");
-    JLabel labelFullName = new JLabel("Full name");
+    private JLabel labelEthernetAdapter = new JLabel("Ethernet adapter");
+    private JLabel labelIpAddress = new JLabel("IP address");
+    private JLabel labelNetmask = new JLabel("Netmask");
+    private JLabel labelGateway = new JLabel("Gateway");
+    private JLabel labelComputersName = new JLabel("Computer's name");
+    private JLabel labelDomainname = new JLabel("Domain name");
+    private JLabel labelFullName = new JLabel("Full name");
 
-    JLabel labelBadIp = new JLabel("Bad ip");
-    JLabel labelBadNetmask = new JLabel("Bad netmask");
-    JLabel labelBadGateway = new JLabel("Bad gateway");
-    JLabel labelBadComputersName = new JLabel("Bad computer's name");
-    JLabel labelBadDomainname = new JLabel("Bad domain's name");
+    private JLabel labelBadIp = new JLabel("Bad ip");
+    private JLabel labelBadNetmask = new JLabel("Bad netmask");
+    private JLabel labelBadGateway = new JLabel("Bad gateway");
+    private JLabel labelBadComputersName = new JLabel("Bad computer's name");
+    private JLabel labelBadDomainname = new JLabel("Bad domain's name");
 
-    JComboBox comboBoxEth = new JComboBox();
-    JTextField jTextFieldIpAddress = new JTextField();
-    JTextField jTextFieldNetmask = new JTextField();
-    JTextField jTextFieldGateway = new JTextField();
-    JTextField jtextFieldComputersName = new JTextField();
-    JTextField jTextFieldDomainname = new JTextField();
-    JTextField jTextFieldFullName = new JTextField();
+    private JComboBox comboBoxEth = new JComboBox();    //Выпадающий список, в котором на выбор сетевой интерфейс
 
-    JTextArea jTextAreaAppOutput = new JTextArea();
-    DefaultCaret caret = (DefaultCaret)jTextAreaAppOutput.getCaret();
-    JScrollPane scrollTerminal = new JScrollPane();
-    JTextField jTextFieldCommandLine = new JTextField();
-    JButton buttonRunCommand = new JButton("Execute");
+    //Текстовые поля для ввода данных конфигурации
+    private JTextField jTextFieldIpAddress = new JTextField();
+    private JTextField jTextFieldNetmask = new JTextField();
+    private JTextField jTextFieldGateway = new JTextField();
+    private JTextField jtextFieldComputersName = new JTextField();
+    private JTextField jTextFieldDomainname = new JTextField();
+    private JTextField jTextFieldFullName = new JTextField();
 
-    JButton buttonConfigureEthernet = new JButton("Configure");
-    JButton buttonUserManager = new JButton("User accounts");
+    //Поле вывода информации о процессе настройки и терминал
+    private JTextArea jTextAreaAppOutput = new JTextArea();
+    private DefaultCaret caret = (DefaultCaret)jTextAreaAppOutput.getCaret();
+    private JScrollPane scrollTerminal = new JScrollPane();
+    private JTextField jTextFieldCommandLine = new JTextField();
+    private JButton buttonRunCommand = new JButton("Execute");
 
-    JButton buttonSambaInfo = new JButton("Get info about AD DC in the network");
+    private JButton buttonConfigureEthernet = new JButton("Configure");
+    private JButton buttonUserManager = new JButton("User accounts");
 
-    File configFilePath = new File("/etc/SambaExpress/SamEx.conf");
-    ArrayList<String> configFile = new ArrayList<String>();
+    private JButton buttonSambaInfo = new JButton("Get info about AD DC in the network");
+
+    private File configFilePath = new File("/etc/sade/sade.conf");// Конфигурационный файл приложения
+    private ArrayList<String> configFile = new ArrayList<String>();
 
     //Класс с функциями
-    Functions f = new Functions();
+    private Functions f = new Functions();
 
     //Список строк файла и список настроенных в нём адаптеров
-    ArrayList<String> interfacesFile = new ArrayList<String>();
-    ArrayList<InterfaceData> interfaces = new ArrayList<InterfaceData>();
+    private ArrayList<String> interfacesFile = new ArrayList<String>();
+    private ArrayList<InterfaceData> interfaces = new ArrayList<InterfaceData>();
 
-    class ConfigureEthernet implements ActionListener
+    JLabel labelBackGroundImage = new JLabel();
+    ImageIcon icon;
+
+    class ConfigureEthernet implements ActionListener   // Обработчик нажатия на кнопку настройки сети и самбы
     {
-        void configureInterface()
+        void configureInterface()   // Функция конфигурации интерфейса
         {
             jTextAreaAppOutput.append("Configuring interface...\n");
             //Отключает кнопку
@@ -110,6 +120,7 @@ class Window extends JFrame
             }
             network = ipSubnet.toString();
 
+            // Генерирует широковещательный адрес
             String[] invertedMask = f.invertMask(netmask).split("\\.");
 
             String[] networkIp = network.split("\\.");
@@ -125,9 +136,9 @@ class Window extends JFrame
                     break;
                 }
             }
-
             broadcast = ipBroadcast.toString();
 
+            // Генерируем параметры в файле
             if(interfaces.get(number).startPos == interfaces.get(number).endPos)
             {
                 interfacesFile.add("");
@@ -170,9 +181,11 @@ class Window extends JFrame
             jTextAreaAppOutput.append("Interface configured\n");
         }
 
-        void setHosts()
+        void setHosts() // Настраиваем файл хостс
         {
             jTextAreaAppOutput.append("Configuring /etc/hosts ...\n");
+
+            //Считываем файл
             ArrayList<String> hosts = new ArrayList<>();
             try
             {
@@ -183,11 +196,12 @@ class Window extends JFrame
                 e.printStackTrace();
             }
 
+            //Ищем стандартные параметры операционной системф
             String[] testLine;
-            boolean configured = false;
-            for(int i = 0; i < hosts.size(); i++)
+            boolean configured = false; // Указывает, был ли сконфигурирован файл хостс
+            for(int i = 0; i < hosts.size(); i++) // Переберает каждую линию файла и ищет соответствие
             {
-                if(configured) break;
+                if(configured) break; // Если настроено - прервать
                 testLine = hosts.get(i).split("\t");
                 if(testLine.length == 2)
                 {
@@ -232,11 +246,13 @@ class Window extends JFrame
                 }
             }
 
+            // Если не находит соответствие то вводит значение по умолчению
             if(!configured)
             {
                 hosts.add(0, ipAddress + "\t" + fullName);
             }
 
+            // Записывает файл
             try {
                 f.writeArrayListToFile(hosts, "/etc/hosts");
             } catch (IOException e) {
@@ -245,11 +261,12 @@ class Window extends JFrame
             jTextAreaAppOutput.append("Configured /etc/hosts\n");
         }
 
-        void setHostname()
+        void setHostname()  // Устанавливает имя машины
         {
             jTextAreaAppOutput.append("Setting hostname...\n");
             ArrayList<String> hostname = new ArrayList<>();
             hostname.add(fullName);
+
             try {
                 f.writeArrayListToFile(hostname, "/etc/hostname");
             } catch (IOException e) {
@@ -258,28 +275,29 @@ class Window extends JFrame
             jTextAreaAppOutput.append("Hostname set\n");
         }
 
-        void updatePackages()
+        void updatePackages() // Обновление списка пакетов и установка обновлений пакетов
         {
             jTextAreaAppOutput.append("Updating packages...\n");
             String s = null;
             try
             {
-                Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "apt-get update"});
-                BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
-                BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+                Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "apt-get update"});    // Выполнение команды в терминале
+                BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));// Слушатель вывода терминала
+                BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));// Слушатель ошибок терминала
                 while ((s = stdInput.readLine()) != null)
                 {
-                    jTextAreaAppOutput.append(s + "\n");
+                    jTextAreaAppOutput.append(s + "\n");    // Вывод в поле терминала результата выполнения команды
                 }
                 while ((s = stdError.readLine()) != null)
                 {
-                    jTextAreaAppOutput.append(s + "\n");
+                    jTextAreaAppOutput.append(s + "\n");    // Вывод ошибок
                 }
             }
             catch(IOException e)
             {
                 e.printStackTrace();
             }
+
             try
             {
                 Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "apt-get upgrade -y"});
@@ -302,7 +320,7 @@ class Window extends JFrame
             jTextAreaAppOutput.append("Packages updated\n");
         }
 
-        void installPackages()
+        void installPackages() // Выполнение установки необходимых пакетов
         {
             jTextAreaAppOutput.append("Installing packages...\n");
             String s = null;
@@ -327,10 +345,11 @@ class Window extends JFrame
             jTextAreaAppOutput.append("Packages Installed\n");
         }
 
-        void sambaConfiguration()
+        void sambaConfiguration() // Настройка самбы
         {
             jTextAreaAppOutput.append("Configuring Samba...\n");
 
+            // Удаляем конфигурационный файл самбы
             String s = null;
             try
             {
@@ -351,6 +370,7 @@ class Window extends JFrame
                 e.printStackTrace();
             }
 
+            // Запрашиваем новый пароль для учётной записи администратора
             String password = "";
             boolean correct = false;
             while(!correct)
@@ -361,15 +381,16 @@ class Window extends JFrame
                 if(!correct) JOptionPane.showMessageDialog(null, "Password isn't strong enough");
             }
 
-
+            //Разделяем доменное имя на полное и короткое
             String[] tmp = domainname.split("\\.");
             String shortName = tmp[0].toUpperCase();
 
-
+            // Выводим выполняемую команду
             jTextAreaAppOutput.append("samba-tool domain provision --realm=" + domainname + " " +
                     "--domain=" + shortName + " --adminpass=\"" + password + "\" --server-role=dc " +
                     "--dns-backend=SAMBA_INTERNAL\n");
 
+            // Выполняем конфигурация самбы как контроллер домена
             try
             {
                 Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "samba-tool domain provision --realm=" + domainname + " " +
@@ -394,9 +415,11 @@ class Window extends JFrame
             jTextAreaAppOutput.append("Samba configured\n");
         }
 
-        void kerberosConfiguration()
+        void kerberosConfiguration() // Настраиваем конфигурационный файл Керберов
         {
             jTextAreaAppOutput.append("Configuring Kerberos5...\n");
+
+            //Копируем файл керберос что получили после конфигурации самбы
             String s = null;
             try
             {
@@ -417,17 +440,20 @@ class Window extends JFrame
                 e.printStackTrace();
             }
 
+            // Редактируем файл
             ArrayList<String> kerberosConfig = new ArrayList<String>();
             try {
                 kerberosConfig = f.readFileToArrayList("/etc/krb5.conf");
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            // Добавляем в файл данные о домене
             kerberosConfig.add("[realms]");
             kerberosConfig.add("\t" + domainname.toUpperCase() + " = {");
             kerberosConfig.add("\t\t kdc = " + fullName);
             kerberosConfig.add("\t\t admin_server = " + fullName);
             kerberosConfig.add("\t}");
+            // Записываем файл на диск
             try {
                 f.writeArrayListToFile(kerberosConfig, "/etc/krb5.conf");
             } catch (IOException e) {
@@ -437,9 +463,10 @@ class Window extends JFrame
             jTextAreaAppOutput.append("Kerberos5 configured\n");
         }
 
-        void resolvConfiguration()
+        void resolvConfiguration()  // Вводим доменное имя в зону поиска
         {
             jTextAreaAppOutput.append("Configuring resolv.conf...\n");
+            // Считываем файл
             ArrayList<String> resolvConf = new ArrayList<String>();
             try {
                 resolvConf = f.readFileToArrayList("/etc/resolv.conf");
@@ -447,22 +474,24 @@ class Window extends JFrame
                 e.printStackTrace();
             }
 
+            //Проверяем был ли введён прежде домен
             boolean conf = false;
             for(int i = 0; i < resolvConf.size(); i++)
             {
                 String[] line = resolvConf.get(i).split(" ");
-                if(line[0].equals("domain"))
+                if(line[0].equals("domain")) // Если был то заменяем
                 {
                     resolvConf.remove(i);
                     resolvConf.add(i, "domain " + domainname.toUpperCase());
                     conf = true;
                 }
             }
-            if(!conf)
+            if(!conf) // Если нет то дописываем
             {
                 resolvConf.add("domain " + domainname.toUpperCase());
             }
 
+            // Сохраняем файл
             try {
                 f.writeArrayListToFile(resolvConf,"/etc/resolv.conf");
             } catch (IOException e) {
@@ -471,13 +500,13 @@ class Window extends JFrame
             jTextAreaAppOutput.append("resolv.conf configured\n");
         }
 
-        void generatingDirectory()
+        void generatingDirectory()  // Создаём папку пользователей на машине
         {
             jTextAreaAppOutput.append("Generating directory...\n");
             String s = null;
             try
             {
-                Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "mkdir -m 770 /Users"});
+                Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "mkdir -m 770 /Users"}); // Создаём папку с правам 770
                 BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
                 BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
                 while ((s = stdInput.readLine()) != null)
@@ -496,7 +525,7 @@ class Window extends JFrame
 
             try
             {
-                Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "chmod g+s /Users"});
+                Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "chmod g+s /Users"}); // Указываем доступ к папке
                 BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
                 BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
                 while ((s = stdInput.readLine()) != null)
@@ -515,7 +544,7 @@ class Window extends JFrame
 
             try
             {
-                Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "chown root:users /Users"});
+                Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "chown root:users /Users"}); // Указываем владельца папки
                 BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
                 BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
                 while ((s = stdInput.readLine()) != null)
@@ -534,9 +563,10 @@ class Window extends JFrame
             jTextAreaAppOutput.append("Directory generated\n");
         }
 
-        void sambaPostConfig()
+        void sambaPostConfig() // Пост-конфигурация самбы
         {
             jTextAreaAppOutput.append("Samba post-configuring...\n");
+            // В файле изменяются настройки перенаправления ДНС и указывается папка пользователей
             ArrayList<String> smbConf = new ArrayList<>();
             try {
                 smbConf = f.readFileToArrayList("/etc/samba/smb.conf");
@@ -573,10 +603,12 @@ class Window extends JFrame
             jTextAreaAppOutput.append("Samba post-configured\n");
         }
 
-        Runnable configureThread = new Runnable() {
+        Runnable configureThread = new Runnable() // Отдельный поток для конфигурации контроллера домена
+        {
             @Override
             public void run()
             {
+                // Отключение кнопок
                 labelIpAddress.setForeground(Color.black);
                 labelNetmask.setForeground(Color.black);
                 labelGateway.setForeground(Color.black);
@@ -592,6 +624,7 @@ class Window extends JFrame
                 boolean error = false;
                 InetAddress ip;
 
+                //Проверка введённых параметров
                 ipAddress = jTextFieldIpAddress.getText();
                 if(!f.validIP(ipAddress))
                 {
@@ -658,7 +691,7 @@ class Window extends JFrame
                 }
                 fullName = computersName + "." + domainname;
 
-                if(!error)
+                if(!error) // Есди все парамерты верны выполнить настройку
                 {
                     makeElementsInvisible();
                     showInstallation();
@@ -691,7 +724,7 @@ class Window extends JFrame
         }
     }
 
-    class RunCommand implements ActionListener
+    class RunCommand implements ActionListener // Выполняет введённую команду в терминале
     {
         class RunCommandThread implements Runnable
         {
@@ -737,7 +770,7 @@ class Window extends JFrame
         }
     }
 
-    class ButtonUsers implements ActionListener
+    class ButtonUsers implements ActionListener // Открывает окно управления пользователями
     {
         public void actionPerformed(ActionEvent e)
         {
@@ -745,7 +778,7 @@ class Window extends JFrame
         }
     }
 
-    class ButtonGetInfo implements ActionListener
+    class ButtonGetInfo implements ActionListener // Получить информацию о контроллере домена в сети
     {
         public void actionPerformed(ActionEvent e)
         {
@@ -786,7 +819,16 @@ class Window extends JFrame
         }
     }
 
-    DocumentListener buildFullName = new DocumentListener()
+    class IpAddressPressed extends MouseAdapter
+    {
+        @Override
+        public void mouseClicked(MouseEvent e)
+        {
+            JOptionPane.showMessageDialog(null, "You can't change IP address from here\nIf you want to change IP address please change it in another way");
+        }
+    }
+
+    DocumentListener buildFullName = new DocumentListener() // Слушатель ввода текста в поля имя компьютера и имя домена
     {
 
         @Override
@@ -832,8 +874,9 @@ class Window extends JFrame
         }
     };
 
-    boolean checkRoot()
+    boolean checkRoot() // Проверка рут доступа
     {
+        // Получает ид номер пользователя. Если 0 - запущено под рутом
         String s = null;
         try
         {
@@ -850,7 +893,7 @@ class Window extends JFrame
         else return false;
     }
 
-    void getInterfacesData()
+    void getInterfacesData() // Получение данных о уже настроенных интерфейсах
     {
         //Считываем файл в память
         try
@@ -902,7 +945,7 @@ class Window extends JFrame
         }
     }
 
-    void getComputersName()
+    void getComputersName() // Получить имя компьютера
     {
         ArrayList<String> hostName = new ArrayList<>();
         try {
@@ -914,7 +957,7 @@ class Window extends JFrame
         jtextFieldComputersName.setText(hostNameSplit[0]);
     }
 
-    void getIpAdresses()
+    void getIpAdresses() // Получить айпи адрес компьютера
     {
         String ip = null;
         try
@@ -947,7 +990,7 @@ class Window extends JFrame
         jTextFieldNetmask.setText("255.255.255.0");
     }
 
-    void makeElementsInvisible()
+    void makeElementsInvisible() // Отключить элементы управления
     {
         labelEthernetAdapter.setVisible(false);
         labelIpAddress.setVisible(false);
@@ -969,14 +1012,14 @@ class Window extends JFrame
         buttonSambaInfo.setEnabled(false);
     }
 
-    void showInstallation()
+    void showInstallation() // Отобразить процесс настройки
     {
         labelIconInstall.setVisible(true);
         labelStatus.setText("Working...");
         labelStatus.setVisible(true);
     }
 
-    void done()
+    void done() // Проверка установленной версии самбы и запись результата в конфигурационный файл
     {
         labelIconInstall.setVisible(false);
 
@@ -988,7 +1031,7 @@ class Window extends JFrame
             version = stdInput.readLine();
             configFile.set(0, "SambaConfigured=yes");
             configFile.set(1, "SambaVersion=" + version);
-            f.writeArrayListToFile(configFile, "/etc/SambaExpress/SamEx.conf");
+            f.writeArrayListToFile(configFile, "/etc/sade/sade.conf");
         }
         catch(IOException e)
         {
@@ -1002,17 +1045,20 @@ class Window extends JFrame
 
     public Window()
     {
-        super("Samba configurator");
+        super("SADE");
 
+        icon = new ImageIcon(Toolkit.getDefaultToolkit().createImage(Window.class.getResource("icon.png")));
+
+        // Проверка рут прав
         boolean root = checkRoot();
         if(!root)
         {
             JOptionPane.showMessageDialog(null, "No root permissions. Run application via terminal with sudo or using superuser");
-            //System.exit(1);
+            System.exit(1);
         }
 
         this.setResizable(false);
-        setSize(690,375);
+        setSize(690,385);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setLayout(null);
 
@@ -1058,6 +1104,9 @@ class Window extends JFrame
         this.add(comboBoxEth);
 
         jTextFieldIpAddress.setBounds(140, 50, 160, 20);
+        jTextFieldIpAddress.setEditable(false);
+        MouseAdapter ipAddress = new IpAddressPressed();
+        jTextFieldIpAddress.addMouseListener(ipAddress);
         this.add(jTextFieldIpAddress);
         labelBadIp.setBounds(140, 70, 160, 20);
         this.add(labelBadIp);
@@ -1126,19 +1175,26 @@ class Window extends JFrame
         buttonSambaInfo.addActionListener(buttonGetInfo);
         this.add(buttonSambaInfo);
 
+        labelBackGroundImage.setBounds(-20, 5, 690, 375);
+        ImageIcon background = new ImageIcon(Toolkit.getDefaultToolkit().createImage(Window.class.getResource("bg-leftcentered.jpg")));
+        labelBackGroundImage.setIcon(background);
+        this.add(labelBackGroundImage);
+
+
+        setIconImage(icon.getImage());
+
         Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize();
         int x = (int) ((dimension.getWidth() - this.getWidth())/2);
         int y = (int) ((dimension.getHeight() - this.getHeight())/2);
         this.setLocation(x, y);
         this.setVisible(true);
 
-        JOptionPane.showMessageDialog(null, "This application works only with root permissions" +
-                "\nBe sure that the program was started via terminal");
+        JOptionPane.showMessageDialog(null, "This application works only with root permissions");
 
-        if(configFilePath.exists())
+        if(configFilePath.exists()) // Проверка существования конфигурационного файла и чтения настроек
         {
             try {
-                configFile = f.readFileToArrayList("/etc/SambaExpress/SamEx.conf");
+                configFile = f.readFileToArrayList("/etc/sade/sade.conf");
                 String[] sambaStatus = configFile.get(0).split("=");
                 if(sambaStatus[1].equals("no")) jTextAreaAppOutput.append("Samba is not configured\n");
                 else
@@ -1155,17 +1211,17 @@ class Window extends JFrame
 
             }
         }
-        else
+        else // Если файла нет то создаем и вводим базовые параметры
         {
             configFile.add("SambaConfigured=no");
             configFile.add("SambaVersion=0");
             jTextAreaAppOutput.append("First launch detected.\nSamba is not configured");
             try {
                 configFilePath.getParentFile().mkdirs();
-                Path path = Paths.get("/etc/SambaExpress/SamEx.conf");
+                Path path = Paths.get("/etc/sade/sade.conf");
                 Files.createDirectories(path.getParent());
                 Files.createFile(path);
-                f.writeArrayListToFile(configFile, "/etc/SambaExpress/SamEx.conf");
+                f.writeArrayListToFile(configFile, "/etc/sade/sade.conf");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -1173,9 +1229,9 @@ class Window extends JFrame
     }
 }
 
-class NoGuiFunctions
+class NoGuiFunctions // Функции для такстового режима
 {
-    boolean checkRoot()
+    boolean checkRoot() // проверка рут
     {
         String s = null;
         try
@@ -1200,31 +1256,38 @@ public class SambaConfigurator
     {
         try
         {
-            if(args[0].equals("nogui"))
+            if(args[0].equals("nogui")) // Если был передан аргумент запустить в текстовом режиме
             {
-                NoGuiFunctions noGuifunctions = new NoGuiFunctions();
+                boolean sambaIsConfigured = false;
+                NoGuiFunctions noGuifunctions = new NoGuiFunctions(); // библиотека функций
 
                 boolean root = noGuifunctions.checkRoot();
                 if(!root)
                 {
                     System.out.println("No root permissions. Run application via terminal with sudo or using superuser");
-                    System.exit(-1);
+                    System.exit(1);
                 }
 
-                File configFilePath = new File("/etc/SambaExpress/SamEx.conf");
+                File configFilePath = new File("/etc/sade/sade.conf"); // Конфигурационный файл
                 ArrayList<String> configFile = new ArrayList<String>();
                 Functions f = new Functions();
 
+                // Если файл есть считать параметры, если нет записать базовые
                 if(configFilePath.exists())
                 {
                     try {
-                        configFile = f.readFileToArrayList("/etc/SambaExpress/SamEx.conf");
+                        configFile = f.readFileToArrayList("/etc/sade/sade.conf");
                         String[] sambaStatus = configFile.get(0).split("=");
-                        if(sambaStatus[1].equals("no")) System.out.println("Samba is not configured\n");
+                        if(sambaStatus[1].equals("no"))
+                        {
+                            sambaIsConfigured = false;
+                            System.out.println("Samba is not configured\n");
+                        }
                         else
                         {
                             if(sambaStatus[1].equals("yes"))
                             {
+                                sambaIsConfigured = true;
                                 String[] sambaVersion = configFile.get(1).split("=");
                                 System.out.println("Samba installed.\nVersion " + sambaVersion[1]);
                                 //buttonUserManager.setEnabled(true);
@@ -1242,20 +1305,20 @@ public class SambaConfigurator
                     System.out.println("First launch detected.\nSamba is not configured");
                     try {
                         configFilePath.getParentFile().mkdirs();
-                        Path path = Paths.get("/etc/SambaExpress/SamEx.conf");
+                        Path path = Paths.get("/etc/sade/sade.conf");
                         Files.createDirectories(path.getParent());
                         Files.createFile(path);
-                        f.writeArrayListToFile(configFile, "/etc/SambaExpress/SamEx.conf");
+                        f.writeArrayListToFile(configFile, "/etc/sade/sade.conf");
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }
 
-                Scanner keyScanner = new Scanner(System.in);
+                Scanner keyScanner = new Scanner(System.in); // Сканер ввода с клавиатуры
                 int menu = -1;
                 do
                 {
-                    System.out.print("\033[H\033[2J");
+                    System.out.print("\033[H\033[2J"); // Очистка экрана
                     System.out.println("-----------------------------------------");
                     System.out.println("Welcome to Samba configurator");
                     System.out.println("-----------------------------------------");
@@ -1276,8 +1339,7 @@ public class SambaConfigurator
                         menu = -1;
                     }
 
-
-                    switch(menu)
+                    switch(menu) // В случае выбора пункта меню переходить в определённую ветку
                     {
                         case 1:
                         {
@@ -1321,7 +1383,7 @@ public class SambaConfigurator
                                 isConfigured = false;
                             }
                             System.out.print("\033[H\033[2J");
-                            if(isConfigured)
+                            if(isConfigured) // Если сервер был настроен, спросить нужно ли его перенастраивать заново
                             {
                                 System.out.println("Samba AD DC already configured.\nType 'yes' if you want to reconfigure it.\nType 'no' to cancel.");
                                 System.out.println("Your choice: ");
@@ -1476,6 +1538,7 @@ public class SambaConfigurator
                                 }
                                 while(!checked);
 
+                                // Вывод сгенерированных настроек на экран
                                 selectedFullName = selectedHostname + "." + selectedDomainName;
                                 System.out.print("\033[H\033[2J");
                                 System.out.println("Parameters generated.\n");
@@ -1488,13 +1551,13 @@ public class SambaConfigurator
                                 System.out.println("Computer's name: " + selectedHostname);
                                 System.out.println("Domain name: " + selectedDomainName);
                                 System.out.println("Full name: " + selectedFullName);
-                                System.out.println("\nType 'yes' if you want to configure AD DS.");
+                                System.out.println("\nType 'yes' if you want to configure AD DC with recommended parameters.");
                                 System.out.println("Type 'modify' if you want to modify selected parameters.");
                                 System.out.println("Your choice: ");
-                                keyScanner.nextLine();
                                 String choice = keyScanner.nextLine();
                                 if(choice.equals("modify"))
                                 {
+                                    // Если пользователь хочет модифицировать настройки запросить ввод всех настроек
                                     System.out.print("\033[H\033[2J");
                                     boolean check;
 
@@ -1506,7 +1569,6 @@ public class SambaConfigurator
                                     do
                                     {
                                         System.out.println("Select ethernet adapter: ");
-                                        keyScanner.nextLine();
                                         selectedEth = keyScanner.nextLine();
                                         check = true;
                                         for(int i = 0 ; i < interfaces.size(); i++)
@@ -1517,21 +1579,16 @@ public class SambaConfigurator
                                     }
                                     while(check);
 
-                                    do
-                                    {
-                                        System.out.println("Input computer's IP address: ");
-                                        keyScanner.nextLine();
-                                        selectedIpAddress = keyScanner.nextLine();
-                                        check = f.validIP(selectedIpAddress);
-                                        check = !check;
-                                        if(check) System.out.println("Invalid IP address");
-                                    }
-                                    while(check);
+                                    System.out.println("Your default ip address is " + selectedIpAddress + " ." +
+                                        "\nIf you want to change it please change it manually and reboot the system" +
+                                        "\nType 'yes' if you want to continue configuration with this address" +
+                                        "\nType 'no' to abort the installation");
+                                    String answer = keyScanner.nextLine();
+                                    if(answer.equals("no")) System.exit(2);
 
                                     do
                                     {
                                         System.out.println("Input netmask address: ");
-                                        keyScanner.nextLine();
                                         selectedNetmask = keyScanner.nextLine();
                                         check = f.validIP(selectedNetmask);
                                         check = !check;
@@ -1542,7 +1599,6 @@ public class SambaConfigurator
                                     do
                                     {
                                         System.out.println("Input gateway: ");
-                                        keyScanner.nextLine();
                                         selectedGateway = keyScanner.nextLine();
                                         check = f.validIP(selectedGateway);
                                         check = !check;
@@ -1554,7 +1610,6 @@ public class SambaConfigurator
                                     {
                                         System.out.println("Input hostname: ");
                                         check = false;
-                                        keyScanner.nextLine();
                                         selectedHostname = keyScanner.nextLine();
                                         String[] testComputersName = selectedHostname.split("\\.");
                                         if(testComputersName.length > 1)
@@ -1568,7 +1623,6 @@ public class SambaConfigurator
                                     do
                                     {
                                         System.out.println("Input domain name: ");
-                                        keyScanner.nextLine();
                                         selectedDomainName = keyScanner.nextLine();
                                         check = false;
                                         String[] testDomainName = selectedDomainName.split("\\.");
@@ -1610,6 +1664,8 @@ public class SambaConfigurator
                                         e.printStackTrace();
                                     }
                                 }
+
+                                // Процесс конфиурации
                                 System.out.println("Configuring...");
 
                                 System.out.println("Configuring interface...\n");
@@ -1875,7 +1931,6 @@ public class SambaConfigurator
                                 while(!correct)
                                 {
                                     System.out.println("Input new administrator password: \nWarning! 8 letters length min, uppercase, lowercase, digits");
-                                    keyScanner.nextLine();
                                     password = keyScanner.nextLine();
                                     correct = f.checkPassword(password);
                                     if(!correct) JOptionPane.showMessageDialog(null, "Password isn't strong enough");
@@ -2087,7 +2142,7 @@ public class SambaConfigurator
                                     version = stdInput.readLine();
                                     configFile.set(0, "SambaConfigured=yes");
                                     configFile.set(1, "SambaVersion=" + version);
-                                    f.writeArrayListToFile(configFile, "/etc/SambaExpress/SamEx.conf");
+                                    f.writeArrayListToFile(configFile, "/etc/sade/sade.conf");
                                 }
                                 catch(IOException e)
                                 {
@@ -2111,8 +2166,23 @@ public class SambaConfigurator
                             break;
                         }
 
-                        case 3:
+                        case 3: // Меню управления пользователями
                         {
+                            if(!sambaIsConfigured)
+                            {
+                                System.out.print("\033[H\033[2J");
+                                System.out.println("Samba is not configured\nPlease configure samba firstly\n");
+                                System.out.print("Press 'Enter' key to continue");
+                                try
+                                {
+                                    System.in.read();
+                                }
+                                catch(IOException e)
+                                {
+
+                                }
+                                break;
+                            }
                             int menu2 = -1;
                             do
                             {
@@ -2185,7 +2255,6 @@ public class SambaConfigurator
                                         do
                                         {
                                             System.out.println("Input new user's password: ");
-                                            keyScanner.nextLine();
                                             newPassword = keyScanner.nextLine();
                                             correct = f.checkPassword(newPassword);
                                             if(!correct)
@@ -2199,7 +2268,6 @@ public class SambaConfigurator
                                         do
                                         {
                                             System.out.println("Request change password after login?(yes/no): ");
-                                            keyScanner.nextLine();
                                             String answer = keyScanner.nextLine();
                                             if(answer.equals("yes")) changePassword = 1;
                                             if(answer.equals("no")) changePassword = 2;
@@ -2244,7 +2312,7 @@ public class SambaConfigurator
                                             }
 
 
-                                            command = "samba-tool user setexpiry " + newUsername;
+                                            command = "samba-tool user setexpiry \"" + newUsername+"\"";
                                             if(expiryDays == 0)
                                             {
                                                 command = command + " --noexpiry";
@@ -2289,7 +2357,6 @@ public class SambaConfigurator
                                         do
                                         {
                                             System.out.println("Input new user's password: ");
-                                            keyScanner.nextLine();
                                             newPassword = keyScanner.nextLine();
                                             correct = f.checkPassword(newPassword);
                                             if(!correct)
@@ -2349,12 +2416,12 @@ public class SambaConfigurator
                                             e.printStackTrace();
                                         }
 
-
                                         break;
                                     }
 
                                     case 5:
                                     {
+                                        System.out.print("\033[H\033[2J");
                                         String answer = "";
                                         String s = null;
                                         try {
@@ -2378,7 +2445,7 @@ public class SambaConfigurator
                                         break;
                                     }
 
-                                    case 6:
+                                    case 6: // Меню управления группами
                                     {
                                         int menu3 = -1;
                                         do
@@ -2573,7 +2640,6 @@ public class SambaConfigurator
                                                     keyScanner.nextLine();
                                                     String username = keyScanner.nextLine();
                                                     System.out.println("Input group's name from what group remove user: ");
-                                                    keyScanner.nextLine();
                                                     String group = keyScanner.nextLine();
 
                                                     String s = null;
@@ -2611,6 +2677,21 @@ public class SambaConfigurator
 
                         case 4:
                         {
+                            if(!sambaIsConfigured)
+                            {
+                                System.out.print("\033[H\033[2J");
+                                System.out.println("Samba is not configured\nPlease configure samba firstly\n");
+                                System.out.print("Press 'Enter' key to continue");
+                                try
+                                {
+                                    System.in.read();
+                                }
+                                catch(IOException e)
+                                {
+
+                                }
+                                break;
+                            }
                             System.out.print("\033[H\033[2J");
                             String selectedIpAddress = "";
                             boolean check;

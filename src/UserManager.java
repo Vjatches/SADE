@@ -64,7 +64,7 @@ public class UserManager extends JDialog
         }
     }
 
-    class AddUserButton implements ActionListener
+    class AddUserButton implements ActionListener // Слущатель кнопки добавления пользователя
     {
 
         @Override
@@ -134,7 +134,7 @@ public class UserManager extends JDialog
         }
     }
 
-    class ClearButton implements ActionListener
+    class ClearButton implements ActionListener // Слушатель кнопки очистка
     {
         @Override
         public void actionPerformed(ActionEvent actionEvent)
@@ -144,7 +144,7 @@ public class UserManager extends JDialog
         }
     }
 
-    class RemoveButton implements ActionListener
+    class RemoveButton implements ActionListener // Удаление пользователей
     {
         @Override
         public void actionPerformed(ActionEvent actionEvent)
@@ -182,7 +182,7 @@ public class UserManager extends JDialog
         }
     }
 
-    class ChangePassword implements ActionListener
+    class ChangePassword implements ActionListener // Изменение пароля
     {
         @Override
         public void actionPerformed(ActionEvent actionEvent)
@@ -227,7 +227,7 @@ public class UserManager extends JDialog
         }
     }
 
-    class GroupManagerButton implements ActionListener
+    class GroupManagerButton implements ActionListener // Открыть менеджер групп
     {
         public void actionPerformed(ActionEvent e)
         {
@@ -235,7 +235,7 @@ public class UserManager extends JDialog
         }
     }
 
-    class ShowPasswordSettings implements ActionListener
+    class ShowPasswordSettings implements ActionListener // Показать политику паролей
     {
         public void actionPerformed(ActionEvent e)
         {
@@ -254,7 +254,7 @@ public class UserManager extends JDialog
         }
     }
 
-    class EnableNoExpiry implements ItemListener
+    class EnableNoExpiry implements ItemListener // Слушатель изменений значения чекбокса
     {
         @Override
         public void itemStateChanged(ItemEvent itemEvent)
@@ -338,6 +338,9 @@ public class UserManager extends JDialog
         ActionListener showPasswordSettings = new ShowPasswordSettings();
         buttonShowPasswordSettings.addActionListener(showPasswordSettings);
         this.add(buttonShowPasswordSettings);
+
+        ImageIcon icon = new ImageIcon(Toolkit.getDefaultToolkit().createImage(Window.class.getResource("icon.png")));
+        setIconImage(icon.getImage());
 
         updateUserList();
 
