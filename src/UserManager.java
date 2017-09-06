@@ -21,8 +21,9 @@ public class UserManager extends JDialog
     JLabel labelPassword = new JLabel("Password:");
 
     JTextField jTextFieldUsername = new JTextField();
-    JTextField jTextFieldPassword = new JTextField();
+    JPasswordField jTextFieldPassword = new JPasswordField();
 
+    JCheckBox checkboxShowPassword = new JCheckBox("Show password");
     JCheckBox checkboxNoExpiry = new JCheckBox("No expiry password");
     JCheckBox checkboxChangePassAfterLogin = new JCheckBox("Change password after login");
     JLabel labelPasswordExpires = new JLabel("Password expires in");
@@ -71,7 +72,7 @@ public class UserManager extends JDialog
         public void actionPerformed(ActionEvent actionEvent)
         {
             String username = jTextFieldUsername.getText();
-            String password = jTextFieldPassword.getText();
+            String password = new String(jTextFieldPassword.getPassword());
 
             if(username.isEmpty())
             {
@@ -270,6 +271,22 @@ public class UserManager extends JDialog
         }
     }
 
+    class ShowPassword implements ItemListener
+    {
+        @Override
+        public void itemStateChanged(ItemEvent itemEvent)
+        {
+            if(checkboxShowPassword.isSelected())
+            {
+                jTextFieldPassword.setEchoChar((char) 0);
+            }
+            else
+            {
+                jTextFieldPassword.setEchoChar('*');
+            }
+        }
+    }
+
     UserManager()
     {
         super();
@@ -309,27 +326,33 @@ public class UserManager extends JDialog
         jTextFieldPassword.setBounds(430, 70, 150, 20);
         this.add(jTextFieldPassword);
 
-        checkboxChangePassAfterLogin.setBounds(320, 100, 300, 20);
+        checkboxShowPassword.setBounds(320, 100, 300, 20);
+        ItemListener showPasswordListener = new ShowPassword();
+        checkboxShowPassword.addItemListener(showPasswordListener);
+        jTextFieldPassword.setEchoChar('*');
+        this.add(checkboxShowPassword);
+
+        checkboxChangePassAfterLogin.setBounds(320, 130, 300, 20);
         this.add(checkboxChangePassAfterLogin);
-        checkboxNoExpiry.setBounds(320, 130, 300, 20 );
+        checkboxNoExpiry.setBounds(320, 160, 300, 20 );
         ItemListener noExpiryListener = new EnableNoExpiry();
         checkboxNoExpiry.addItemListener(noExpiryListener);
         checkboxNoExpiry.setSelected(true);
         this.add(checkboxNoExpiry);
-        labelPasswordExpires.setBounds(320, 160, 150, 20);
+        labelPasswordExpires.setBounds(320, 190, 150, 20);
         this.add(labelPasswordExpires);
         SpinnerModel spinnerModelDays = new SpinnerNumberModel(41, 1, 42, 1);
         spinnerDays.setModel(spinnerModelDays);
-        spinnerDays.setBounds(470, 160, 40, 20);
+        spinnerDays.setBounds(470, 190, 40, 20);
         this.add(spinnerDays);
         labelDays.setBounds(520, 160, 50, 20);
         this.add(labelDays);
 
-        buttonAdd.setBounds(320,190, 125, 20);
+        buttonAdd.setBounds(320,220, 125, 20);
         ActionListener addUser = new AddUserButton();
         buttonAdd.addActionListener(addUser);
         this.add(buttonAdd);
-        buttonClear.setBounds(455, 190, 125, 20);
+        buttonClear.setBounds(455, 220, 125, 20);
         ActionListener clearData = new ClearButton();
         buttonClear.addActionListener(clearData);
         this.add(buttonClear);

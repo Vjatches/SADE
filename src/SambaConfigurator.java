@@ -827,7 +827,7 @@ class Window extends JFrame
         @Override
         public void mouseClicked(MouseEvent e)
         {
-            JOptionPane.showMessageDialog(null, "You can't change IP address from here\nIf you want to change IP address please change it in another way");
+            JOptionPane.showMessageDialog(null, "You can't change IP address here\nIf you want to change IP address please change it in another way");
         }
     }
 
