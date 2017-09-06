@@ -13,14 +13,12 @@ public class Functions
 
         return file;
     }
-
     void writeArrayListToFile(ArrayList<String> strings, String path) throws IOException
     {
         PrintWriter pw = new PrintWriter(path);
         for(int i = 0; i < strings.size(); i++) pw.println(strings.get(i));
         pw.close();
     }
-
     String invertMask(String ip)
     {
         String invertedIp = "";
@@ -197,8 +195,8 @@ public class Functions
 
         return invertedIp;
     }
-
-    boolean validIP (String ip) {
+    boolean validIP (String ip)
+    {
         try {
             if ( ip == null || ip.isEmpty() ) {
                 return false;
@@ -224,7 +222,6 @@ public class Functions
             return false;
         }
     }
-
     boolean checkPassword(String password)
     {
         boolean answer = true;

@@ -253,9 +253,12 @@ class Window extends JFrame
             }
 
             // Записывает файл
-            try {
+            try
+            {
                 f.writeArrayListToFile(hosts, "/etc/hosts");
-            } catch (IOException e) {
+            }
+            catch (IOException e)
+            {
                 e.printStackTrace();
             }
             jTextAreaAppOutput.append("Configured /etc/hosts\n");
@@ -1371,6 +1374,7 @@ public class SambaConfigurator
 
                         case 2:
                         {
+                            keyScanner.nextLine();
                             String[] tmp = configFile.get(0).split("=");
                             boolean isConfigured;
                             boolean configPermit = false;
@@ -1387,7 +1391,6 @@ public class SambaConfigurator
                             {
                                 System.out.println("Samba AD DC already configured.\nType 'yes' if you want to reconfigure it.\nType 'no' to cancel.");
                                 System.out.println("Your choice: ");
-                                keyScanner.nextLine();
                                 String answer = keyScanner.nextLine();
                                 if(answer.equals("yes"))
                                 {
@@ -1509,16 +1512,13 @@ public class SambaConfigurator
                                     e.printStackTrace();
                                 }
                                 selectedNetmask = "255.255.255.0";
-
                                 boolean checked;
                                 do
                                 {
                                     checked = true;
                                     System.out.println("Input domain name(ex: linux.local): ");
-                                    keyScanner.nextLine();
                                     selectedDomainName = keyScanner.nextLine();
                                     String[] testDomainName = selectedDomainName.split("\\.");
-
 
                                     if(testDomainName.length <2 )
                                     {
