@@ -1551,10 +1551,23 @@ public class SambaConfigurator
                                 System.out.println("Computer's name: " + selectedHostname);
                                 System.out.println("Domain name: " + selectedDomainName);
                                 System.out.println("Full name: " + selectedFullName);
-                                System.out.println("\nType 'yes' if you want to configure AD DC with recommended parameters.");
-                                System.out.println("Type 'modify' if you want to modify selected parameters.");
-                                System.out.println("Your choice: ");
-                                String choice = keyScanner.nextLine();
+                                String choice;
+
+                                boolean boolChoice = false;
+                                do {
+                                    boolChoice = false;
+                                    System.out.println("\nType 'yes' if you want to configure AD DC with recommended parameters.");
+                                    System.out.println("Type 'no' to cancel");
+                                    System.out.println("Type 'modify' if you want to modify selected parameters.");
+                                    System.out.println("Your choice: ");
+                                    choice = keyScanner.nextLine();
+                                    if(choice.equals("yes")) boolChoice = true;
+                                    if(choice.equals("no")) boolChoice = true;
+                                    if(choice.equals("modify")) boolChoice = true;
+                                }
+                                while(!boolChoice);
+
+                                if(choice.equals("no")) System.exit(2);
                                 if(choice.equals("modify"))
                                 {
                                     // Если пользователь хочет модифицировать настройки запросить ввод всех настроек
