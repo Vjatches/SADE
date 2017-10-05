@@ -195,13 +195,14 @@ public class UserManager extends JDialog
                     int reply = JOptionPane.showConfirmDialog(null, "Change password for user \"" + selectedUser + "\"?", "Change password", JOptionPane.YES_NO_OPTION);
                     if (reply == JOptionPane.YES_OPTION) {
 
-                        boolean correct = true;
+                        boolean correct = false;
                         String newPassword = "";
                         while(!correct)
                         {
+                            System.out.println("123");
                             newPassword = JOptionPane.showInputDialog(null, "Input new password for\"" + selectedUser + "\":");
                             correct = f.checkPassword(newPassword);
-                            if(!correct)
+                            if (!correct)
                             {
                                 JOptionPane.showMessageDialog(null, "Password isn't strong enough");
                             }

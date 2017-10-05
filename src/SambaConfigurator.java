@@ -1052,13 +1052,22 @@ class Window extends JFrame
 
         icon = new ImageIcon(Toolkit.getDefaultToolkit().createImage(Window.class.getResource("icon.png")));
 
+        // Проверка интернет-соединения
+        boolean inet = f.checkInternetConnection();
+        if(!inet)
+        {
+            JOptionPane.showMessageDialog(null, "No internet connection.\nPlease check your internet connection.");
+            System.exit(1);
+        }
+
         // Проверка рут прав
         boolean root = checkRoot();
         if(!root)
         {
             JOptionPane.showMessageDialog(null, "No root permissions. Run application via terminal with sudo or using superuser");
-            System.exit(1);
+            System.exit(2);
         }
+
 
         this.setResizable(false);
         setSize(690,385);
@@ -1264,16 +1273,24 @@ public class SambaConfigurator
                 boolean sambaIsConfigured = false;
                 NoGuiFunctions noGuifunctions = new NoGuiFunctions(); // библиотека функций
 
+                Functions f = new Functions();
+                boolean inet = f.checkInternetConnection();
+                if(!inet)
+                {
+                    System.out.println("No internet connection.\nPlease check your internet connection.");
+                    System.exit(1);
+                }
+
                 boolean root = noGuifunctions.checkRoot();
                 if(!root)
                 {
                     System.out.println("No root permissions. Run application via terminal with sudo or using superuser");
-                    System.exit(1);
+                    System.exit(2);
                 }
 
                 File configFilePath = new File("/etc/sade/sade.conf"); // Конфигурационный файл
                 ArrayList<String> configFile = new ArrayList<String>();
-                Functions f = new Functions();
+
 
                 // Если файл есть считать параметры, если нет записать базовые
                 if(configFilePath.exists())

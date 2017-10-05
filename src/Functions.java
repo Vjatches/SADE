@@ -1,4 +1,5 @@
 import java.io.*;
+import java.net.*;
 import java.util.ArrayList;
 
 public class Functions
@@ -251,6 +252,36 @@ public class Functions
         {
             answer = false;
         }
+        return answer;
+    }
+    boolean checkInternetConnection()
+    {
+        boolean answer;
+
+        Socket sock = new Socket();
+        InetSocketAddress addr = new InetSocketAddress("www.google.com",80);
+        try
+        {
+            sock.connect(addr, 3000);
+            answer = true;
+        }
+        catch(IOException e)
+        {
+            answer = false;
+        }
+        finally
+        {
+            try
+            {
+                sock.close();
+            }
+            catch(IOException e)
+            {
+
+            }
+
+        }
+
         return answer;
     }
 }
