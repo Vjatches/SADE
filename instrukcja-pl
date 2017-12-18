@@ -1,0 +1,32 @@
+-Ta sama instrukcja umiesczona na Google Drive.
+ -https://docs.google.com/document/d/1uviIfcJ2EVRztoC9t-DdgnnRHDs-LcD1JzlaC1W1JSw/edit
+ -
+ -Prerequisites: Debian 8.9. Ewentualnie GUI
+ -
+ -Część 1 “Instalacja Java 8”
+ -
+ -Stworzyć plik 
+ - nano /etc/apt/sources.list.d/java-8-debian.list
+ -Dodać do pliku dwie linie:
+ -deb http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main
+ -deb-src http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main
+ -Zaimportować GPG klucz - dla tego wykonać polecenie:
+ - apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EEA14886
+ -Podnieść apt cache i zainstalować Java 8:
+ - apt-get update
+ -apt-get install oracle-java8-installer
+ -Zainstalować środowisko Java
+ -apt-get install oracle-java8-set-default
+ -
+ -Część 2 “Uruchomienie SADE”.
+ -
+ -Ściągnąć plik SADE.jar z https://github.com/Vjatches/SADE
+ -Dla tego:
+ -Kliknąć po nazwie pliku (SADE.jar) w liście plików.
+ -W nowym oknie kliknąć przycisk Download.
+ -Wrzucić ten plik do dowolnego foldera na maszynie wirtualnej Debian 8.9 z poprzednio zainstalowaną Javą 8
+ -Zalogować się pod kontem “root” (BARDZO WAŻNIE!)
+ -Uruchomić program w trybie tekstowym:
+ -java -jar SADE.jar nogui
+ -Albo w trybie graficznym
+ -java -jar SADE.jar
